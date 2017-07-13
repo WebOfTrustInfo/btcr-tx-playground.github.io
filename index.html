@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>BTCR Playground</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.5.0/sha256.min.js"></script>
+    <script src="./btcr_converter.js"></script>
+    <script src="./forge.min.js"></script>
+</head>
+<body style="padding: 20px; font-family:Arial">
+<h1>BTCR TX Conversion Playground</h1>
+<div>
+
+    <h2>Transaction ID</h2>
+
+    <p>
+        <textarea contenteditable="true" id="txid" cols="80">f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107</textarea>
+        <br>
+        Mainnet?<input id="checkBox" type="checkbox">
+    </p>
+    <button id="btn1" onclick="JavaScript:convertToBtcrId()">Convert to BTCR DID</button>
+
+</div>
+
+
+<div>
+
+    <h2>BTCR DID</h2>
+    <p>
+        <textarea contenteditable="true" id="did" cols="80"></textarea>
+    </p>
+    <button id="btn2" onclick="JavaScript:convertToTxid()">Convert to TXID</button>
+
+</div>
+
+<div>
+    <h2>Examples</h2>
+    <ul>
+        <li>Example 1
+            <ul>
+                <li>TXID:     016b71d9ec62709656504f1282bb81f7acf998df025e54bd68ea33129d8a425b/mainnet</li>
+                <li>BTCR DID: tx1-rk63-uvxf-9pqc-sy</li>
+            </ul>
+    </ul>
+</div>
+
+
+<script>
+
+  function convertToBtcrId() {
+
+    var txElement = document.getElementById('txid');
+    var didElement = document.getElementById('did');
+    didElement.value = "computing...";
+    var txid = txElement.value;
+    var checkBox = document.getElementById('checkBox');
+    var chain = checkBox.checked ? "mainnet" : "testnet";
+    var result = BtcrUtils.txidToBech32(txid, chain);
+    result.then(function(result, err) {
+      didElement.value = result;
+    });
+
+  }
+
+  function convertToTxid() {
+
+    var txElement = document.getElementById('did');
+    var txidElement = document.getElementById('txid');
+    txidElement.value = "computing...";
+    var did = txElement.value;
+    var result = BtcrUtils.bech32ToTxid(did);
+    result.then(function(result, err) {
+      txidElement.value = result;
+      var checkBox = document.getElementById('checkBox');
+      checkBox.checked = did.charAt(4) == 'r';
+    });
+
+  }
+
+</script>
+
+
+</body>
+</html>
