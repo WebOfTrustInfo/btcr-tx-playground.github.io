@@ -37,31 +37,39 @@
 <div>
     <h2>Transaction Details</h2>
     <p>
-    <h3>View in Blockcypher:</h3>
-    <div id="txDetails"></div>
 
-    <h3>Block Details:</h3>
-        <table cellpadding="10">
-    <tr>
-        <th>Block Height</th>
-        <th>Block Position</th>
-        <th>Received Date</th>
-        <th>Confirmed Date</th>
-
-    </tr>
-    <tr>
-        <td id="height"></td>
-        <td id="pos"></td>
-        <td id="received"></td>
-        <td id="confirmed"></td>
-    </tr>
-</table>
+    <table cellpadding="10">
+        <tr>
+            <th>Transaction</th>
+            <td id="txDetails"></td>
+        </tr>
+        <tr>
+            <th>DDO</th>
+            <td id="ddo"></td>
+        </tr>
+        <tr>
+            <th>Block Height</th>
+            <td id="height"></td>
+        </tr>
+        <tr>
+            <th>Block Position</th>
+            <td id="pos"></td>
+        </tr>
+        <tr>
+            <th>Received Date</th>
+            <td id="received"></td>
+        </tr>
+        <tr>
+            <th>Confirmed Date</th>
+            <td id="confirmed"></td>
+        </tr>
+    </table>
     <h3>Inputs:</h3>
 
-    <div id="inputs"></div>
+    <div id="inputs" style="background-color:#E0E0E0; overflow: auto;"></div>
 
     <h3>Ouputs:</h3>
-    <div id="outputs"></div>
+    <div id="outputs" style="background-color:#E0E0E0; overflow: auto;"></div>
 
     </p>
 </div>
@@ -72,7 +80,7 @@
     <ul>
         <li>Example 1
             <ul>
-                <li>TXID:     016b71d9ec62709656504f1282bb81f7acf998df025e54bd68ea33129d8a425b/mainnet</li>
+                <li>TXID: 016b71d9ec62709656504f1282bb81f7acf998df025e54bd68ea33129d8a425b/mainnet</li>
                 <li>BTCR DID: tx1-rk63-uvxf-9pqc-sy</li>
             </ul>
     </ul>
@@ -80,6 +88,11 @@
 
 
 <script>
+
+  var formatUrl = function (theUrl) {
+    var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>";
+    return txLink;
+  };
 
   function convertToBtcrId() {
     var txElement = document.getElementById('txid');
@@ -91,14 +104,14 @@
     var isMainnet = checkBox.checked;
 
     var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
-    var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>"
+    var txLink = formatUrl(theUrl);
     var txRef = document.getElementById('txDetails');
     txRef.innerHTML = txLink;
 
     didElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
     var result = BtcrUtils.txidToBech32(txid, chain);
-    result.then(function(result, err) {
+    result.then(function (result, err) {
       if (err) {
         didElement.value = "error looking up transaction"
       } else {
@@ -107,17 +120,32 @@
     });
 
     BtcrUtils.getTxDetails(txid, chain)
-      .then(function(result, err) {
-        document.getElementById('height').innerHTML = result.blockHeight;
-        document.getElementById('pos').innerHTML = result.blockIndex;
+      .then(function (result, err) {
+
+        var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
+            "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
+        var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
+        document.getElementById('height').innerHTML = blockHeightLink;
+
+        var posUrl = blockUrl + "/" + result.blockIndex.toString();
+        var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
+        document.getElementById('pos').innerHTML = blockPosLink;
 
         document.getElementById('received').innerHTML = result.txReceived;
         document.getElementById('confirmed').innerHTML = result.txConfirmed;
         document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
         document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
 
-      });
+        var opReturnData = null;
+        for (var i=0; i<result.outputs.length; i++) {
+          var output = result.outputs[i];
+          if (output.data != null) {
+            opReturnData = output.data
+          }
+        }
+        document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
 
+      });
   }
 
   function convertToTxid() {
@@ -127,10 +155,40 @@
     txidElement.value = "computing...";
     var did = txElement.value;
     var result = BtcrUtils.bech32ToTxid(did);
-    result.then(function(result, err) {
+    result.then(function (result, err) {
       txidElement.value = result;
       var checkBox = document.getElementById('checkBox');
       checkBox.checked = did.charAt(4) == 'r';
+
+      var isMainnet = checkBox.checked;
+      var chain = isMainnet ? "mainnet" : "testnet";
+      BtcrUtils.getTxDetails(result, chain)
+        .then(function (result, err) {
+
+          var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
+          "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
+          var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
+          document.getElementById('height').innerHTML = blockHeightLink;
+
+          var posUrl = blockUrl + "/" + result.blockIndex.toString();
+          var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
+          document.getElementById('pos').innerHTML = blockPosLink;
+
+          document.getElementById('received').innerHTML = result.txReceived;
+          document.getElementById('confirmed').innerHTML = result.txConfirmed;
+          document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
+          document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
+
+          var opReturnData = null;
+          for (var i=0; i<result.outputs.length; i++) {
+            var output = result.outputs[i];
+            if (output.data != null) {
+              opReturnData = output.data
+            }
+          }
+          document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
+
+        });
     });
 
   }
