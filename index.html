@@ -35,6 +35,39 @@
 </div>
 
 <div>
+    <h2>Transaction Details</h2>
+    <p>
+    <h3>View in Blockcypher:</h3>
+    <div id="txDetails"></div>
+
+    <h3>Block Details:</h3>
+        <table cellpadding="10">
+    <tr>
+        <th>Block Height</th>
+        <th>Block Position</th>
+        <th>Received Date</th>
+        <th>Confirmed Date</th>
+
+    </tr>
+    <tr>
+        <td id="height"></td>
+        <td id="pos"></td>
+        <td id="received"></td>
+        <td id="confirmed"></td>
+    </tr>
+</table>
+    <h3>Inputs:</h3>
+
+    <div id="inputs"></div>
+
+    <h3>Ouputs:</h3>
+    <div id="outputs"></div>
+
+    </p>
+</div>
+
+
+<div>
     <h2>Examples</h2>
     <ul>
         <li>Example 1
@@ -49,17 +82,41 @@
 <script>
 
   function convertToBtcrId() {
-
     var txElement = document.getElementById('txid');
     var didElement = document.getElementById('did');
-    didElement.value = "computing...";
-    var txid = txElement.value;
     var checkBox = document.getElementById('checkBox');
-    var chain = checkBox.checked ? "mainnet" : "testnet";
+
+    var txid = txElement.value;
+
+    var isMainnet = checkBox.checked;
+
+    var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
+    var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>"
+    var txRef = document.getElementById('txDetails');
+    txRef.innerHTML = txLink;
+
+    didElement.value = "computing...";
+    var chain = isMainnet ? "mainnet" : "testnet";
     var result = BtcrUtils.txidToBech32(txid, chain);
     result.then(function(result, err) {
-      didElement.value = result;
+      if (err) {
+        didElement.value = "error looking up transaction"
+      } else {
+        didElement.value = result;
+      }
     });
+
+    BtcrUtils.getTxDetails(txid, chain)
+      .then(function(result, err) {
+        document.getElementById('height').innerHTML = result.blockHeight;
+        document.getElementById('pos').innerHTML = result.blockIndex;
+
+        document.getElementById('received').innerHTML = result.txReceived;
+        document.getElementById('confirmed').innerHTML = result.txConfirmed;
+        document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
+        document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
+
+      });
 
   }
 
