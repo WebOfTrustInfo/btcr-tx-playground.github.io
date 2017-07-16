@@ -28,7 +28,7 @@
     </fieldset>
 
     </p>
-    <button id="btn1" onclick="JavaScript:convertToBtcrId()">Convert to TX Ref</button>
+    <button id="btn1" onclick="JavaScript:convertToTxRef()">Convert to TX Ref</button>
 
 </div>
 
@@ -44,7 +44,7 @@
 </div>
 
 <div>
-    <h2>Transaction Details</h2>
+    <h2>Transaction Summary</h2>
     <p>
 
     <table cellpadding="10">
@@ -73,13 +73,15 @@
             <td id="confirmed"></td>
         </tr>
     </table>
-    <h3>Inputs:</h3>
+    </p>
+</div>
 
-    <div id="inputs" style="background-color:#E0E0E0; overflow: auto;"></div>
+<div>
+    <h2>Deterministic DDO</h2>
+    <div id="d-ddo">
+        <pre>
 
-    <h3>Ouputs:</h3>
-    <div id="outputs" style="background-color:#E0E0E0; overflow: auto;"></div>
-
+        </pre>
     </p>
 </div>
 
@@ -108,8 +110,6 @@
   function clearStatusPartial() {
     document.getElementById('received').innerHTML = "";
     document.getElementById('confirmed').innerHTML = "";
-    document.getElementById('inputs').innerHTML = "";
-    document.getElementById('outputs').innerHTML = "";
     document.getElementById('ddo').innerHTML = "";
     document.getElementById('txidLink').innerHTML = "";
   }
@@ -119,7 +119,7 @@
     return txLink;
   };
 
-  function convertToBtcrId() {
+  function convertToTxRef() {
     var txElement = document.getElementById('txid');
     var trefElement = document.getElementById('txref');
     var isMainnet = document.getElementById('mainnetChain').checked;
@@ -127,7 +127,7 @@
 
     trefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
-    var result = BtcrUtils.txidToBech32(txid, chain);
+    var result = BtcrUtils.txidToTxref(txid, chain);
     result.then(function (result) {
       trefElement.value = result;
       BtcrUtils.getTxDetails(txid, chain)
@@ -148,17 +148,18 @@
 
           document.getElementById('received').innerHTML = result.txReceived;
           document.getElementById('confirmed').innerHTML = result.txConfirmed;
-          document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
-          document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
 
           var opReturnData = null;
           for (var i = 0; i < result.outputs.length; i++) {
             var output = result.outputs[i];
-            if (output.data != null) {
-              opReturnData = output.data
+            if (output.dataString != null) {
+              opReturnData = output.dataString;
             }
           }
           document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
+
+          var deterministicDid = toDeterministicDid(result);
+          document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
         }, function (err) {
           clearStatusFull();
           trefElement.value = "error looking up transaction";
@@ -178,7 +179,7 @@
     var isMainnet = txref.charAt(4) == 'r';
 
     // decode txref to get block height and index
-    var decoded = BtcrUtils.txRefDecode(txref);
+    var decoded = BtcrUtils.txrefDecode(txref);
     if (!decoded) {
       txidElement.value = "error decoding txref. This is not a valid value";
       clearStatusFull();
@@ -201,7 +202,7 @@
       document.getElementById('testnet3Chain').checked = true;
     }
 
-    var result = BtcrUtils.bech32ToTxid(txref);
+    var result = BtcrUtils.txrefToTxid(txref);
     result.then(function (result) {
         txidElement.value = result;
         var chain = mainnetCheckbox.checked ? "mainnet" : "testnet";
@@ -209,18 +210,17 @@
           .then(function (result) {
             document.getElementById('received').innerHTML = result.txReceived;
             document.getElementById('confirmed').innerHTML = result.txConfirmed;
-            document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
-            document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
 
             var opReturnData = null;
             for (var i = 0; i < result.outputs.length; i++) {
               var output = result.outputs[i];
-              if (output.data != null) {
-                opReturnData = output.data
+              if (output.dataString != null) {
+                opReturnData = output.dataString;
               }
             }
             document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
-
+            var deterministicDid = toDeterministicDid(result);
+            document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
           }, function (err) {
             txidElement.value = "error looking up transaction details. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";
             clearStatusPartial();
@@ -231,6 +231,87 @@
       }
     );
 
+  }
+
+  function toDeterministicDid(txDetails) {
+    var result = {
+      "@context": [ "https://schema.org/",  "https://w3id.org/security/v1"]
+    };
+
+    var fundingTxref = txDetails.inputs[0].previousHash;
+    var inputValue = txDetails.inputs[0].outputValue * 0.00000001;
+
+    var ddoHex = null;
+    var ddoAsm = null;
+    var ddoText = null;
+    var proofType = null;
+    var outputValue = 0;
+    var outputAddress = null;
+    for (var i = 0; i < txDetails.outputs.length; i++) {
+      var output = txDetails.outputs[i];
+      if (output.dataString != null) {
+        ddoHex = output.script;
+        ddoAsm = "OP_RETURN " + output.dataHex;
+        ddoText = output.dataString;
+      } else {
+        proofType = output.scriptType;
+        outputValue = output.outputValue * 0.00000001;
+        outputAddress = output.addresses[0];
+      }
+    }
+
+    var burnFee = outputValue - inputValue;
+
+    var ddo = {
+      "txid": txDetails.txHash,
+      "funding-txid": txDetails.inputs[0].previousHash,
+      "funding-txref": "TODO",
+      "hash": txDetails.txHash,
+      "more-ddo-hex": ddoHex,
+      "more-ddo-asm": ddoAsm,
+      "more-ddo-txt": ddoText,
+      "owner": [
+        {
+          "id": "todo",
+          "type": [ "CryptographicKey", "EdDsaSAPublicKey", "update-proof" ],
+          "curve": "secp256k1",
+          "publicKeyHex": "todo"
+        }
+      ],
+      "control": [
+        {
+          "control-bond": outputValue,
+          "rotate-proof": [
+            {
+              "proof-type": proofType,
+              "hash-base58check": outputAddress
+            }
+          ],
+          "revocation-proof": [
+            {
+              "bond-value": outputValue,
+              "proof-type": proofType,
+              "hash-base58check": outputAddress
+            }
+          ]
+        }
+      ]
+    };
+    var signature = {
+      "type": "SatoshiBlockchainSignature2017",
+      "id": "todo",
+      "chain": txDetails.chain,
+      "blockhash": txDetails.blockHash,
+      "blockindex": txDetails.blockIndex,
+      "blocktime": txDetails.txConfirmed,
+      "confirmations": txDetails.numConfirmations,
+      "time": txDetails.txReceived,
+      "timereceived": txDetails.txReceived,
+      "burn-fee": burnFee
+    };
+    result.ddo = ddo;
+    result.signature = signature;
+    return result;
   }
 
 </script>
