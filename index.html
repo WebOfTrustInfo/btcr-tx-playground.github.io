@@ -19,16 +19,16 @@
         <br>
         Mainnet?<input id="checkBox" type="checkbox">
     </p>
-    <button id="btn1" onclick="JavaScript:convertToBtcrId()">Convert to BTCR DID</button>
+    <button id="btn1" onclick="JavaScript:convertToBtcrId()">Convert to TX Ref</button>
 
 </div>
 
 
 <div>
 
-    <h2>BTCR DID</h2>
+    <h2>TX Ref</h2>
     <p>
-        <textarea contenteditable="true" id="did" cols="80"></textarea>
+        <textarea contenteditable="true" id="txref" cols="80"></textarea>
     </p>
     <button id="btn2" onclick="JavaScript:convertToTxid()">Convert to TXID</button>
 
@@ -81,7 +81,7 @@
         <li>Example 1
             <ul>
                 <li>TXID: 016b71d9ec62709656504f1282bb81f7acf998df025e54bd68ea33129d8a425b/mainnet</li>
-                <li>BTCR DID: tx1-rk63-uvxf-9pqc-sy</li>
+                <li>TX Ref: tx1-rk63-uvxf-9pqc-sy</li>
             </ul>
     </ul>
 </div>
@@ -96,7 +96,7 @@
 
   function convertToBtcrId() {
     var txElement = document.getElementById('txid');
-    var didElement = document.getElementById('did');
+    var trefElement = document.getElementById('txref');
     var checkBox = document.getElementById('checkBox');
 
     var txid = txElement.value;
@@ -108,62 +108,13 @@
     var txRef = document.getElementById('txDetails');
     txRef.innerHTML = txLink;
 
-    didElement.value = "computing...";
+    trefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
     var result = BtcrUtils.txidToBech32(txid, chain);
-    result.then(function (result, err) {
-      if (err) {
-        didElement.value = "error looking up transaction"
-      } else {
-        didElement.value = result;
-      }
-    });
-
-    BtcrUtils.getTxDetails(txid, chain)
-      .then(function (result, err) {
-
-        var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
-            "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
-        var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
-        document.getElementById('height').innerHTML = blockHeightLink;
-
-        var posUrl = blockUrl + "/" + result.blockIndex.toString();
-        var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
-        document.getElementById('pos').innerHTML = blockPosLink;
-
-        document.getElementById('received').innerHTML = result.txReceived;
-        document.getElementById('confirmed').innerHTML = result.txConfirmed;
-        document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
-        document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
-
-        var opReturnData = null;
-        for (var i=0; i<result.outputs.length; i++) {
-          var output = result.outputs[i];
-          if (output.data != null) {
-            opReturnData = output.data
-          }
-        }
-        document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
-
-      });
-  }
-
-  function convertToTxid() {
-
-    var txElement = document.getElementById('did');
-    var txidElement = document.getElementById('txid');
-    txidElement.value = "computing...";
-    var did = txElement.value;
-    var result = BtcrUtils.bech32ToTxid(did);
-    result.then(function (result, err) {
-      txidElement.value = result;
-      var checkBox = document.getElementById('checkBox');
-      checkBox.checked = did.charAt(4) == 'r';
-
-      var isMainnet = checkBox.checked;
-      var chain = isMainnet ? "mainnet" : "testnet";
-      BtcrUtils.getTxDetails(result, chain)
-        .then(function (result, err) {
+    result.then(function (result) {
+      trefElement.value = result;
+      BtcrUtils.getTxDetails(txid, chain)
+        .then(function (result) {
 
           var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
           "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
@@ -180,16 +131,68 @@
           document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
 
           var opReturnData = null;
-          for (var i=0; i<result.outputs.length; i++) {
+          for (var i = 0; i < result.outputs.length; i++) {
             var output = result.outputs[i];
             if (output.data != null) {
               opReturnData = output.data
             }
           }
           document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
-
+        }, function (err) {
+          trefElement.value = "error looking up transaction";
         });
+    }, function (err) {
+      trefElement.value = "error looking up transaction";
     });
+
+  }
+
+  function convertToTxid() {
+
+    var txElement = document.getElementById('txref');
+    var txidElement = document.getElementById('txid');
+    txidElement.value = "computing...";
+    var txref = txElement.value;
+    var result = BtcrUtils.bech32ToTxid(txref);
+    result.then(function (result) {
+        txidElement.value = result;
+        var checkBox = document.getElementById('checkBox');
+        checkBox.checked = txref.charAt(4) == 'r';
+
+        var isMainnet = checkBox.checked;
+        var chain = isMainnet ? "mainnet" : "testnet";
+        BtcrUtils.getTxDetails(result, chain)
+          .then(function (result) {
+            var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
+            "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
+            var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
+            document.getElementById('height').innerHTML = blockHeightLink;
+
+            var posUrl = blockUrl + "/" + result.blockIndex.toString();
+            var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
+            document.getElementById('pos').innerHTML = blockPosLink;
+
+            document.getElementById('received').innerHTML = result.txReceived;
+            document.getElementById('confirmed').innerHTML = result.txConfirmed;
+            document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
+            document.getElementById('outputs').innerHTML = "<pre>" + JSON.stringify(result.outputs, null, 4) + "</pre>";
+
+            var opReturnData = null;
+            for (var i = 0; i < result.outputs.length; i++) {
+              var output = result.outputs[i];
+              if (output.data != null) {
+                opReturnData = output.data
+              }
+            }
+            document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
+
+          }, function (err) {
+            txidElement.value = "error converting to txid";
+          });
+      }, function (err) {
+        txidElement.value = "error converting to txid";
+      }
+    );
 
   }
 

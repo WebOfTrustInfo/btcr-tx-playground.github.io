@@ -8282,12 +8282,12 @@ var request = function request(obj) {
       if (request.status >= 200 && request.status < 300) {
         resolve(request.responseText);
       } else {
-        reject(request.statusText);
+        reject(new Error(request.responseText));
       }
     });
     request.addEventListener('error', function () {
-      console.log(request.status);
-      reject(request.status);
+      console.error(request.status);
+      reject(new Error(request.status));
     });
 
     request.open('GET', obj.url);
@@ -8349,6 +8349,9 @@ var txRefDecode = function txRefDecode(bech32Tx) {
   var stripped = bech32Tx.replace(/-/g, '');
 
   var result = bech32.decode(stripped);
+  if (result === null) {
+    return null;
+  }
   var buf = result.data;
 
   var chainMarker = buf[0];
@@ -8417,6 +8420,7 @@ function getTxDetails(txId, chain) {
     };
   }, function (error) {
     console.error(error);
+    throw error;
   });
 }
 
@@ -8426,24 +8430,29 @@ var txidToBech32 = function txidToBech32(txId, chain) {
     return result;
   }, function (error) {
     console.error(error);
+    throw error;
   });
 };
 
 var bech32ToTxid = function bech32ToTxid(bech32Tx) {
 
-  blockLocation = txRefDecode(bech32Tx);
-
-  var blockHeight = blockLocation.blockHeight;
-  var blockIndex = blockLocation.blockIndex;
-  var chain = blockLocation.chain;
-  var theUrl;
-  if (chain === CHAIN_MAINNET) {
-    theUrl = "https://api.blockcypher.com/v1/btc/main/blocks/" + blockHeight + "?txstart=" + blockIndex + "&limit=1";
-  } else {
-    theUrl = "https://api.blockcypher.com/v1/btc/test3/blocks/" + blockHeight + "?txstart=" + blockIndex + "&limit=1";
-  }
-
   return new Promise(function (resolve, reject) {
+
+    var blockLocation = txRefDecode(bech32Tx);
+    if (blockLocation === null) {
+      reject(new Error("Could not decode txref " + bech32Tx));
+    }
+
+    var blockHeight = blockLocation.blockHeight;
+    var blockIndex = blockLocation.blockIndex;
+    var chain = blockLocation.chain;
+    var theUrl;
+    if (chain === CHAIN_MAINNET) {
+      theUrl = "https://api.blockcypher.com/v1/btc/main/blocks/" + blockHeight + "?txstart=" + blockIndex + "&limit=1";
+    } else {
+      theUrl = "https://api.blockcypher.com/v1/btc/test3/blocks/" + blockHeight + "?txstart=" + blockIndex + "&limit=1";
+    }
+
     request({ url: theUrl }).then(function (data) {
       var txData = JSON.parse(data);
       resolve(txData.txids[0]);
@@ -8471,7 +8480,15 @@ module.exports = {
  getTxDetails("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "testnet").then( result => {
  console.log(result);
  }
- )*/
+ )
+
+txidToBech32("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "mainnet")
+  .then(result => {
+    console.log(result);
+  }, error => {
+    console.error(error);
+  });
+  */
 
 },{"./bech32":1,"xmlhttprequest":39}]},{},[41])(41)
 });
