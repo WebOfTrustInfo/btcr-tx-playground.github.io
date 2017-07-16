@@ -53,10 +53,6 @@
             <td id="txidLink"></td>
         </tr>
         <tr>
-            <th>DDO</th>
-            <td id="ddo"></td>
-        </tr>
-        <tr>
             <th>Block Height</th>
             <td id="height"></td>
         </tr>
@@ -110,8 +106,8 @@
   function clearStatusPartial() {
     document.getElementById('received').innerHTML = "";
     document.getElementById('confirmed').innerHTML = "";
-    document.getElementById('ddo').innerHTML = "";
     document.getElementById('txidLink').innerHTML = "";
+    document.getElementById('d-ddo').innerHTML = "<pre></pre>";
   }
 
   var formatUrl = function (theUrl) {
@@ -148,15 +144,6 @@
 
           document.getElementById('received').innerHTML = result.txReceived;
           document.getElementById('confirmed').innerHTML = result.txConfirmed;
-
-          var opReturnData = null;
-          for (var i = 0; i < result.outputs.length; i++) {
-            var output = result.outputs[i];
-            if (output.dataString != null) {
-              opReturnData = output.dataString;
-            }
-          }
-          document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
 
           var deterministicDid = toDeterministicDid(result);
           document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
@@ -210,15 +197,6 @@
           .then(function (result) {
             document.getElementById('received').innerHTML = result.txReceived;
             document.getElementById('confirmed').innerHTML = result.txConfirmed;
-
-            var opReturnData = null;
-            for (var i = 0; i < result.outputs.length; i++) {
-              var output = result.outputs[i];
-              if (output.dataString != null) {
-                opReturnData = output.dataString;
-              }
-            }
-            document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
             var deterministicDid = toDeterministicDid(result);
             document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
           }, function (err) {
