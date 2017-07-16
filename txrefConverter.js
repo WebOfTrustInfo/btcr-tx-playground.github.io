@@ -8482,11 +8482,14 @@ module.exports = {
  }
  )*/
 
-bech32ToTxid("tx1-rk63-uvxf-9pqc-sy").then(function (result) {
-  console.log(result);
-}, function (error) {
-  console.error(error);
-});
+/*
+bech32ToTxid("tx1-rk63-uvxf-9pqc-sy")
+  .then(result => {
+    console.log(result);
+  }, error => {
+    console.error(error);
+  });
+*/
 
 },{"./bech32":1,"xmlhttprequest":39}]},{},[41])(41)
 });
