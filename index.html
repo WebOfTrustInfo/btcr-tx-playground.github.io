@@ -11,6 +11,9 @@
 <body style="padding: 20px; font-family:Arial">
 <h1>BTCR TX Conversion Playground</h1>
 <div>
+    <p><small>This is a prototype BTCR playground developed for the <a href="https://github.com/WebOfTrustInfo/btcr-hackathon" target="new">Rebooting Web of Trust BTCR Hackathon</a>. The source code for this repo is located at <a href="https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io" target="new">btcr-tx-playground.github.io</a> and the javascript tx ref source code is available at <a href="https://github.com/WebOfTrustInfo/txref-conversion-js" target="new">txref-conversion-js</a></small></p>
+</div>
+<div>
 
     <h2>Transaction ID</h2>
 
@@ -99,14 +102,9 @@
     var trefElement = document.getElementById('txref');
     var checkBox = document.getElementById('checkBox');
 
-    var txid = txElement.value;
+    var txid = txElement.value.trim();
 
     var isMainnet = checkBox.checked;
-
-    var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
-    var txLink = formatUrl(theUrl);
-    var txRef = document.getElementById('txDetails');
-    txRef.innerHTML = txLink;
 
     trefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
@@ -115,6 +113,10 @@
       trefElement.value = result;
       BtcrUtils.getTxDetails(txid, chain)
         .then(function (result) {
+          var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
+          var txLink = formatUrl(theUrl);
+          var txRef = document.getElementById('txDetails');
+          txRef.innerHTML = txLink;
 
           var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
           "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
@@ -142,7 +144,7 @@
           trefElement.value = "error looking up transaction";
         });
     }, function (err) {
-      trefElement.value = "error looking up transaction";
+      trefElement.value = "error looking up transaction. Make sure the right chain is selected";
     });
 
   }
@@ -152,26 +154,35 @@
     var txElement = document.getElementById('txref');
     var txidElement = document.getElementById('txid');
     txidElement.value = "computing...";
-    var txref = txElement.value;
+    var txref = txElement.value.trim();
+    var isMainnet = txref.charAt(4) == 'r';
+
+    // decode txref to get block height and index
+    var decoded = BtcrUtils.txRefDecode(txref);
+    if (!decoded) {
+      txidElement.value = "error decoding txref. This is not a valid value";
+      return;
+    }
+
+    var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + decoded.blockHeight :
+        "https://live.blockcypher.com/btc-testnet/block/" + decoded.blockHeight;
+    var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + decoded.blockHeight.toString() + "</a>"
+    document.getElementById('height').innerHTML = blockHeightLink;
+
+    var posUrl = blockUrl + "/" + decoded.blockIndex.toString();
+    var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + decoded.blockIndex.toString() + "</a>"
+    document.getElementById('pos').innerHTML = blockPosLink;
+
+    // update mainnet/testnet
+    var mainnetCheckbox = document.getElementById('checkBox');
+    mainnetCheckbox.checked = isMainnet;
+
     var result = BtcrUtils.bech32ToTxid(txref);
     result.then(function (result) {
         txidElement.value = result;
-        var checkBox = document.getElementById('checkBox');
-        checkBox.checked = txref.charAt(4) == 'r';
-
-        var isMainnet = checkBox.checked;
-        var chain = isMainnet ? "mainnet" : "testnet";
+        var chain = mainnetCheckbox.checked ? "mainnet" : "testnet";
         BtcrUtils.getTxDetails(result, chain)
           .then(function (result) {
-            var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
-            "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
-            var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
-            document.getElementById('height').innerHTML = blockHeightLink;
-
-            var posUrl = blockUrl + "/" + result.blockIndex.toString();
-            var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
-            document.getElementById('pos').innerHTML = blockPosLink;
-
             document.getElementById('received').innerHTML = result.txReceived;
             document.getElementById('confirmed').innerHTML = result.txConfirmed;
             document.getElementById('inputs').innerHTML = "<pre>" + JSON.stringify(result.inputs, null, 4) + "</pre>";
@@ -187,10 +198,10 @@
             document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
 
           }, function (err) {
-            txidElement.value = "error converting to txid";
+            txidElement.value = "error looking up transaction details. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";
           });
       }, function (err) {
-        txidElement.value = "error converting to txid";
+        txidElement.value = "error looking up transaction by id. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";;
       }
     );
 
