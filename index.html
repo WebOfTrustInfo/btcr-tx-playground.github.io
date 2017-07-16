@@ -74,48 +74,63 @@
 
 <div>
     <h2>Deterministic DDO</h2>
-    <div id="d-ddo">
+    <div id="d-ddo" style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
         <pre>
 
         </pre>
     </p>
-</div>
-
-
-<div>
-    <h2>Examples</h2>
-    <ul>
-        <li>Example 1
-            <ul>
-                <li>TXID: 016b71d9ec62709656504f1282bb81f7acf998df025e54bd68ea33129d8a425b/mainnet</li>
-                <li>TX Ref: tx1-rk63-uvxf-9pqc-sy</li>
-            </ul>
-    </ul>
+        </div>
 </div>
 
 
 <script>
 
-  function clearStatusFull() {
+  var clearStatusFull = function() {
     document.getElementById('height').innerHTML = "";
     document.getElementById('pos').innerHTML = "";
     clearStatusPartial();
-
   }
 
-  function clearStatusPartial() {
+  var clearStatusPartial = function() {
     document.getElementById('received').innerHTML = "";
     document.getElementById('confirmed').innerHTML = "";
     document.getElementById('txidLink').innerHTML = "";
     document.getElementById('d-ddo').innerHTML = "<pre></pre>";
   }
 
+  var updateDdoDetails = function (result, txref, txrefInput) {
+    document.getElementById('received').innerHTML = result.txReceived;
+    document.getElementById('confirmed').innerHTML = result.txConfirmed;
+    var deterministicDid = toDeterministicDid(result, txref, txrefInput);
+    document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
+  };
+
   var formatUrl = function (theUrl) {
     var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>";
     return txLink;
   };
 
-  function convertToTxRef() {
+  var updateBlockHeightAndPos = function (blockHeight, blockIndex, isMainnet) {
+    var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + blockHeight :
+    "https://live.blockcypher.com/btc-testnet/block/" + blockHeight;
+
+    var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + blockHeight.toString() + "</a>"
+    document.getElementById('height').innerHTML = blockHeightLink;
+
+    var posUrl = blockUrl + "/" + blockIndex.toString();
+    var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + blockIndex.toString() + "</a>";
+    document.getElementById('pos').innerHTML = blockPosLink;
+  };
+
+
+  var updateTxLink = function (isMainnet, txid) {
+    var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
+    var txLink = formatUrl(theUrl);
+    var txRef = document.getElementById('txidLink');
+    txRef.innerHTML = txLink;
+  };
+
+  var convertToTxRef = function() {
     var txElement = document.getElementById('txid');
     var trefElement = document.getElementById('txref');
     var isMainnet = document.getElementById('mainnetChain').checked;
@@ -123,30 +138,22 @@
 
     trefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
-    var result = BtcrUtils.txidToTxref(txid, chain);
-    result.then(function (result) {
-      trefElement.value = result;
+    BtcrUtils.txidToTxref(txid, chain).then(function (txref) {
+      trefElement.value = txref;
       BtcrUtils.getTxDetails(txid, chain)
-        .then(function (result) {
-          var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
-          var txLink = formatUrl(theUrl);
-          var txRef = document.getElementById('txidLink');
-          txRef.innerHTML = txLink;
+        .then(function (txDetails) {
+          updateTxLink(isMainnet, txid);
+          updateBlockHeightAndPos(txDetails.blockHeight, txDetails.blockIndex, isMainnet);
 
-          var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
-          "https://live.blockcypher.com/btc-testnet/block/" + result.blockHeight;
-          var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + result.blockHeight.toString() + "</a>"
-          document.getElementById('height').innerHTML = blockHeightLink;
+          // Get txref for input transaction
+          BtcrUtils.txidToTxref(txDetails.inputs[0].previousHash, chain)
+            .then(function (txrefInput) {
+              updateDdoDetails(txDetails, txref, txrefInput);
+          }, function(err) {
+              // display what we can
+              updateDdoDetails(txDetails, txref, null);
+            });
 
-          var posUrl = blockUrl + "/" + result.blockIndex.toString();
-          var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + result.blockIndex.toString() + "</a>"
-          document.getElementById('pos').innerHTML = blockPosLink;
-
-          document.getElementById('received').innerHTML = result.txReceived;
-          document.getElementById('confirmed').innerHTML = result.txConfirmed;
-
-          var deterministicDid = toDeterministicDid(result);
-          document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
         }, function (err) {
           clearStatusFull();
           trefElement.value = "error looking up transaction";
@@ -155,10 +162,9 @@
       clearStatusFull();
       trefElement.value = "error looking up transaction. Make sure the right chain is selected";
     });
-
   }
 
-  function convertToTxid() {
+  var convertToTxid = function() {
     var txElement = document.getElementById('txref');
     var txidElement = document.getElementById('txid');
     txidElement.value = "computing...";
@@ -173,14 +179,7 @@
       return;
     }
 
-    var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + decoded.blockHeight :
-        "https://live.blockcypher.com/btc-testnet/block/" + decoded.blockHeight;
-    var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + decoded.blockHeight.toString() + "</a>"
-    document.getElementById('height').innerHTML = blockHeightLink;
-
-    var posUrl = blockUrl + "/" + decoded.blockIndex.toString();
-    var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + decoded.blockIndex.toString() + "</a>"
-    document.getElementById('pos').innerHTML = blockPosLink;
+    updateBlockHeightAndPos(decoded.blockHeight, decoded.blockIndex, isMainnet);
 
     // update mainnet/testnet
     if (isMainnet) {
@@ -189,16 +188,23 @@
       document.getElementById('testnet3Chain').checked = true;
     }
 
-    var result = BtcrUtils.txrefToTxid(txref);
-    result.then(function (result) {
-        txidElement.value = result;
-        var chain = mainnetCheckbox.checked ? "mainnet" : "testnet";
-        BtcrUtils.getTxDetails(result, chain)
-          .then(function (result) {
-            document.getElementById('received').innerHTML = result.txReceived;
-            document.getElementById('confirmed').innerHTML = result.txConfirmed;
-            var deterministicDid = toDeterministicDid(result);
-            document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(deterministicDid, null, 4) + "</pre>";
+    BtcrUtils.txrefToTxid(txref).then(function (txid) {
+        txidElement.value = txid;
+        updateTxLink(isMainnet, txid);
+      var chain = isMainnet ? "mainnet" : "testnet";
+        BtcrUtils.getTxDetails(txid, chain)
+          .then(function (txDetails) {
+
+             // Get txref for input transaction
+             BtcrUtils.txidToTxref(txDetails.inputs[0].previousHash, chain)
+             .then(function (txrefInput) {
+             updateDdoDetails(txDetails, txref, txrefInput);
+             }, function(err) {
+             // display what we can
+             updateDdoDetails(txDetails, txref, null);
+             });
+
+            updateDdoDetails(txDetails, txref);
           }, function (err) {
             txidElement.value = "error looking up transaction details. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";
             clearStatusPartial();
@@ -211,13 +217,14 @@
 
   }
 
-  function toDeterministicDid(txDetails) {
+  var toDeterministicDid = function(txDetails, txref, txrefInput) {
     var result = {
       "@context": [ "https://schema.org/",  "https://w3id.org/security/v1"]
     };
 
     var fundingTxref = txDetails.inputs[0].previousHash;
     var inputValue = txDetails.inputs[0].outputValue * 0.00000001;
+    var ownerDid = "did:btcr:" + txref.substring(txref.indexOf('-') + 1);
 
     var ddoHex = null;
     var ddoAsm = null;
@@ -239,18 +246,19 @@
     }
 
     var burnFee = outputValue - inputValue;
+    var txrefInputAdjusted = txrefInput ? txrefInput : "Could not compute at this time; perhaps you're hitting rate limits";
 
     var ddo = {
       "txid": txDetails.txHash,
       "funding-txid": txDetails.inputs[0].previousHash,
-      "funding-txref": "TODO",
+      "funding-txref": txrefInputAdjusted,
       "hash": txDetails.txHash,
       "more-ddo-hex": ddoHex,
       "more-ddo-asm": ddoAsm,
       "more-ddo-txt": ddoText,
       "owner": [
         {
-          "id": "todo",
+          "id": ownerDid,
           "type": [ "CryptographicKey", "EdDsaSAPublicKey", "update-proof" ],
           "curve": "secp256k1",
           "publicKeyHex": "todo"
@@ -277,7 +285,7 @@
     };
     var signature = {
       "type": "SatoshiBlockchainSignature2017",
-      "id": "todo",
+      "id": ownerDid,
       "chain": txDetails.chain,
       "blockhash": txDetails.blockHash,
       "blockindex": txDetails.blockIndex,
