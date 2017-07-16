@@ -20,7 +20,13 @@
     <p>
         <textarea contenteditable="true" id="txid" cols="80">f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107</textarea>
         <br>
-        Mainnet?<input id="checkBox" type="checkbox">
+
+    <fieldset style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
+    <legend>Select blockchain</legend>
+        <input type="radio" id="testnet3Chain" name="chainSelection" value="testnet3" checked="checked" />testnet3<br />
+        <input type="radio" id="mainnetChain" name="chainSelection" value="mainnet" />mainnet<br />
+    </fieldset>
+
     </p>
     <button id="btn1" onclick="JavaScript:convertToBtcrId()">Convert to TX Ref</button>
 
@@ -44,7 +50,7 @@
     <table cellpadding="10">
         <tr>
             <th>Transaction</th>
-            <td id="txDetails"></td>
+            <td id="txidLink"></td>
         </tr>
         <tr>
             <th>DDO</th>
@@ -92,6 +98,22 @@
 
 <script>
 
+  function clearStatusFull() {
+    document.getElementById('height').innerHTML = "";
+    document.getElementById('pos').innerHTML = "";
+    clearStatusPartial();
+
+  }
+
+  function clearStatusPartial() {
+    document.getElementById('received').innerHTML = "";
+    document.getElementById('confirmed').innerHTML = "";
+    document.getElementById('inputs').innerHTML = "";
+    document.getElementById('outputs').innerHTML = "";
+    document.getElementById('ddo').innerHTML = "";
+    document.getElementById('txidLink').innerHTML = "";
+  }
+
   var formatUrl = function (theUrl) {
     var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>";
     return txLink;
@@ -100,11 +122,8 @@
   function convertToBtcrId() {
     var txElement = document.getElementById('txid');
     var trefElement = document.getElementById('txref');
-    var checkBox = document.getElementById('checkBox');
-
+    var isMainnet = document.getElementById('mainnetChain').checked;
     var txid = txElement.value.trim();
-
-    var isMainnet = checkBox.checked;
 
     trefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
@@ -115,7 +134,7 @@
         .then(function (result) {
           var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
           var txLink = formatUrl(theUrl);
-          var txRef = document.getElementById('txDetails');
+          var txRef = document.getElementById('txidLink');
           txRef.innerHTML = txLink;
 
           var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + result.blockHeight :
@@ -141,16 +160,17 @@
           }
           document.getElementById('ddo').innerHTML = formatUrl(opReturnData);
         }, function (err) {
+          clearStatusFull();
           trefElement.value = "error looking up transaction";
         });
     }, function (err) {
+      clearStatusFull();
       trefElement.value = "error looking up transaction. Make sure the right chain is selected";
     });
 
   }
 
   function convertToTxid() {
-
     var txElement = document.getElementById('txref');
     var txidElement = document.getElementById('txid');
     txidElement.value = "computing...";
@@ -161,6 +181,7 @@
     var decoded = BtcrUtils.txRefDecode(txref);
     if (!decoded) {
       txidElement.value = "error decoding txref. This is not a valid value";
+      clearStatusFull();
       return;
     }
 
@@ -174,8 +195,11 @@
     document.getElementById('pos').innerHTML = blockPosLink;
 
     // update mainnet/testnet
-    var mainnetCheckbox = document.getElementById('checkBox');
-    mainnetCheckbox.checked = isMainnet;
+    if (isMainnet) {
+      document.getElementById('mainnetChain').checked = true;
+    } else {
+      document.getElementById('testnet3Chain').checked = true;
+    }
 
     var result = BtcrUtils.bech32ToTxid(txref);
     result.then(function (result) {
@@ -199,9 +223,11 @@
 
           }, function (err) {
             txidElement.value = "error looking up transaction details. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";
+            clearStatusPartial();
           });
       }, function (err) {
-        txidElement.value = "error looking up transaction by id. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";;
+        txidElement.value = "error looking up transaction by id. This could be hitting API rate limits. You can lookup transaction details given the block height, index, and chain";
+        clearStatusPartial();
       }
     );
 

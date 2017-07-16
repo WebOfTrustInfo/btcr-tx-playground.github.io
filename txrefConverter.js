@@ -8480,15 +8480,13 @@ module.exports = {
  getTxDetails("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "testnet").then( result => {
  console.log(result);
  }
- )
+ )*/
 
-txidToBech32("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "mainnet")
-  .then(result => {
-    console.log(result);
-  }, error => {
-    console.error(error);
-  });
-  */
+bech32ToTxid("tx1-rk63-uvxf-9pqc-sy").then(function (result) {
+  console.log(result);
+}, function (error) {
+  console.error(error);
+});
 
 },{"./bech32":1,"xmlhttprequest":39}]},{},[41])(41)
 });
