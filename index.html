@@ -16,12 +16,13 @@
 <div>
 
     <h2>Transaction ID</h2>
+    <div style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
 
     <p>
         <textarea contenteditable="true" id="txid" cols="80">f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107</textarea>
         <br>
 
-    <fieldset style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
+    <fieldset style="border:#BBBDD6 solid 1px; padding:1px 10px;">
     <legend>Select blockchain for Transaction ID</legend>
         <input type="radio" id="testnet3Chain" name="chainSelection" value="testnet3" checked="checked" />Bitcoin testnet3<br />
         <input type="radio" id="mainnetChain" name="chainSelection" value="mainnet" />Bitcoin mainnet<br />
@@ -29,6 +30,7 @@
 
     </p>
     <button id="btn1" onclick="JavaScript:convertToTxRef()">Convert to TX Ref</button>
+    </div>
 
 </div>
 
@@ -36,15 +38,18 @@
 <div>
 
     <h2>TX Ref</h2>
+    <div style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
     <p>
         <textarea contenteditable="true" id="txref" cols="80"></textarea>
     </p>
     <button id="btn2" onclick="JavaScript:convertToTxid()">Convert to TXID</button>
+    </div>
 
 </div>
 
 <div>
     <h2>Transaction Summary</h2>
+    <div style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px;">
     <p>
 
     <table cellpadding="10">
@@ -70,6 +75,7 @@
         </tr>
     </table>
     </p>
+    </div>
 </div>
 
 <div>
@@ -84,6 +90,7 @@
 
 
 <script>
+    const COIN_DECIMAL_PRECISION = 4;
 
   var clearStatusFull = function() {
     document.getElementById('height').innerHTML = "";
@@ -217,6 +224,10 @@
 
   }
 
+  var toDisplayChain = function (chain) {
+    return chain === "testnet" ? "testnet3" : chain;
+  };
+
   var toDeterministicDid = function(txDetails, txref, txrefInput) {
     var result = {
       "@context": [ "https://schema.org/",  "https://w3id.org/security/v1"]
@@ -266,7 +277,7 @@
       ],
       "control": [
         {
-          "control-bond": outputValue,
+          "control-bond": parseFloat(outputValue.toFixed(COIN_DECIMAL_PRECISION)),
           "rotate-proof": [
             {
               "proof-type": proofType,
@@ -275,7 +286,7 @@
           ],
           "revocation-proof": [
             {
-              "bond-value": outputValue,
+              "bond-value": parseFloat(outputValue.toFixed(COIN_DECIMAL_PRECISION)),
               "proof-type": proofType,
               "hash-base58check": outputAddress
             }
@@ -286,14 +297,14 @@
     var signature = {
       "type": "SatoshiBlockchainSignature2017",
       "id": ownerDid,
-      "chain": txDetails.chain,
+      "chain": toDisplayChain(txDetails.chain),
       "blockhash": txDetails.blockHash,
       "blockindex": txDetails.blockIndex,
       "blocktime": txDetails.txConfirmed,
       "confirmations": txDetails.numConfirmations,
       "time": txDetails.txReceived,
       "timereceived": txDetails.txReceived,
-      "burn-fee": burnFee
+      "burn-fee": parseFloat(burnFee.toFixed(COIN_DECIMAL_PRECISION))
     };
     result.ddo = ddo;
     result.signature = signature;
