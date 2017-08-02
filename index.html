@@ -23,13 +23,13 @@
         <br>
 
     <fieldset style="border:#BBBDD6 solid 1px; padding:1px 10px;">
-    <legend>Select blockchain for Transaction ID</legend>
+    <legend>Select blockchain</legend>
         <input type="radio" id="testnet3Chain" name="chainSelection" value="testnet3" checked="checked" />Bitcoin testnet3<br />
         <input type="radio" id="mainnetChain" name="chainSelection" value="mainnet" />Bitcoin mainnet<br />
     </fieldset>
 
     </p>
-    <button id="btn1" onclick="JavaScript:convertToTxRef()">Convert to TX Ref</button>
+    <button id="btn1" onclick="JavaScript:convertFromTxid()">Convert from TXID</button>
     </div>
 
 </div>
@@ -42,7 +42,32 @@
     <p>
         <textarea contenteditable="true" id="txref" cols="80"></textarea>
     </p>
-    <button id="btn2" onclick="JavaScript:convertToTxid()">Convert to TXID</button>
+    <button id="btn2" onclick="JavaScript:convertFromTxref()">Convert from TX Ref</button>
+    </div>
+
+</div>
+
+<div>
+
+    <h2>Transaction Block Height/Position</h2>
+    <div style="color:#474774; background:#EBEFFB; border:#BBBDD6 solid 1px; padding:1px 10px; vertical-align: middle;">
+
+        <p>
+            <label for="blockHeight" style="vertical-align: middle;">Block Height</label>
+            <textarea contenteditable="true" id="blockHeight" cols="30" style="vertical-align: middle;"></textarea>
+            &nbsp;&nbsp;
+            <label for="blockPosition" style="vertical-align: middle;">Block Position</label>
+            <textarea contenteditable="true" id="blockPosition" cols="30" style="vertical-align: middle;"></textarea>
+            <br>
+
+        <fieldset style="border:#BBBDD6 solid 1px; padding:1px 10px;">
+            <legend>Select blockchain</legend>
+            <input type="radio" id="testnet3Chain2" name="chainSelection2" value="testnet3" checked="checked" />Bitcoin testnet3<br />
+            <input type="radio" id="mainnetChain2" name="chainSelection2" value="mainnet" />Bitcoin mainnet<br />
+        </fieldset>
+
+        </p>
+        <button id="btn3" onclick="JavaScript:convertFromBlockheightPos()">Convert from Block Height and Position</button>
     </div>
 
 </div>
@@ -99,16 +124,15 @@
 
 <script>
 
-    // TODO: toDisplayChain!!!
-    var toDisplayChain = function (chain) {
-      return chain === "testnet" ? "testnet3" : chain;
-    };
+  var toDisplayChain = function (chain) {
+    return chain === "testnet" ? "testnet3" : chain;
+  };
 
   var clearStatusFull = function() {
     document.getElementById('height').innerHTML = "";
     document.getElementById('pos').innerHTML = "";
     clearStatusPartial();
-  }
+  };
 
   var clearStatusPartial = function() {
     document.getElementById('received').innerHTML = "";
@@ -118,105 +142,107 @@
     document.getElementById('fragment1').innerHTML = "<pre></pre>";
   };
 
-    var updateTxDetails = function (result, isMainnet) {
-      updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, isMainnet);
-      updateTxLink(isMainnet, result.txDetails.txid);
+  var updateTxDetails = function (result, isMainnet) {
+    updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, isMainnet);
+    updateTxLink(isMainnet, result.txDetails.txid);
 
-      // update mainnet/testnet
-      if (isMainnet) {
-        document.getElementById('mainnetChain').checked = true;
-      } else {
-        document.getElementById('testnet3Chain').checked = true;
-      }
+    document.getElementById('received').innerHTML = result.txDetails.txReceived;
+    document.getElementById('confirmed').innerHTML = result.txDetails.txConfirmed;
+    document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(result.deterministicDdo, null, 4) + "</pre>";
+    document.getElementById('fragment1').innerHTML = "<pre>" + JSON.stringify(result.fragment1, null, 4) + "</pre>";
+  };
 
-      document.getElementById('received').innerHTML = result.txDetails.txReceived;
-      document.getElementById('confirmed').innerHTML = result.txDetails.txConfirmed;
-      document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(result.deterministicDdo, null, 4) + "</pre>";
-      document.getElementById('fragment1').innerHTML = "<pre>" + JSON.stringify(result.fragment1, null, 4) + "</pre>";
-    };
+  var formatUrl = function (theUrl) {
+    var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>";
+    return txLink;
+  };
 
-    var formatUrl = function (theUrl) {
-      var txLink = "<a href=\"" + theUrl + "\" target='new'>" + theUrl + "</a>";
-      return txLink;
-    };
+  var updateBlockHeightAndPos = function (blockHeight, blockIndex, isMainnet) {
+    // update mainnet/testnet
+    if (isMainnet) {
+      document.getElementById('mainnetChain').checked = true;
+      document.getElementById('mainnetChain2').checked = true;
+    } else {
+      document.getElementById('testnet3Chain').checked = true;
+      document.getElementById('testnet3Chain2').checked = true;
+    }
 
-    var updateBlockHeightAndPos = function (blockHeight, blockIndex, isMainnet) {
-      var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + blockHeight :
+    var blockUrl = isMainnet ? "https://live.blockcypher.com/btc/block/" + blockHeight :
       "https://live.blockcypher.com/btc-testnet/block/" + blockHeight;
 
-      var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + blockHeight.toString() + "</a>"
-      document.getElementById('height').innerHTML = blockHeightLink;
+    var blockHeightLink = "<a href=\"" + blockUrl + "\" target='new'>" + blockHeight.toString() + "</a>"
+    document.getElementById('height').innerHTML = blockHeightLink;
 
-      var posUrl = blockUrl + "/" + blockIndex.toString();
-      var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + blockIndex.toString() + "</a>";
-      document.getElementById('pos').innerHTML = blockPosLink;
-    };
+    var posUrl = blockUrl + "/" + blockIndex.toString();
+    var blockPosLink = "<a href=\"" + posUrl + "\" target='new'>" + blockIndex.toString() + "</a>";
+    document.getElementById('pos').innerHTML = blockPosLink;
 
-    var updateTxLink = function (isMainnet, txid) {
-      var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
-      var txLink = formatUrl(theUrl);
-      var txRef = document.getElementById('txidLink');
-      txRef.innerHTML = txLink;
-    };
+    document.getElementById('blockHeight').value = blockHeight;
+    document.getElementById('blockPosition').value = blockIndex;
+  };
 
-    var convertToTxRef = function () {
-      var txidElement = document.getElementById('txid');
-      var txrefElement = document.getElementById('txref');
-      var isMainnet = document.getElementById('mainnetChain').checked;
-      var txid = txidElement.value.trim();
+  var updateTxLink = function (isMainnet, txid) {
+    var theUrl = isMainnet ? "https://api.blockcypher.com/v1/btc/main/txs/" + txid : "https://api.blockcypher.com/v1/btc/test3/txs/" + txid;
+    var txLink = formatUrl(theUrl);
+    var txRef = document.getElementById('txidLink');
+    txRef.innerHTML = txLink;
+  };
 
-      txrefElement.value = "computing...";
-      var chain = isMainnet ? "mainnet" : "testnet";
+  var convertFromTxid = function () {
+    var txidElement = document.getElementById('txid');
+    var txrefElement = document.getElementById('txref');
+    var isMainnet = document.getElementById('mainnetChain').checked;
+    var txid = txidElement.value.trim();
 
-      BtcrUtils.getDeterministicDdoFromTxid(txid, chain)
-        .then(function (result) {
-          txrefElement.value = result.txDetails.txref;
-          updateTxDetails(result, isMainnet);
-        }, function (err) {
-          txidElement.value = "error looking up transaction. This may not a valid value";
-          clearStatusFull();
-        });
-    };
+    txrefElement.value = "computing...";
+    var chain = isMainnet ? "mainnet" : "testnet";
 
-    var convertToTxid = function () {
-      var txrefElement = document.getElementById('txref');
-      var txidElement = document.getElementById('txid');
-      txidElement.value = "computing...";
-      var txref = txrefElement.value.trim();
-      var isMainnet = txref.charAt(4) == 'r';
+    BtcrUtils.getDeterministicDdoFromTxid(txid, chain)
+      .then(function (result) {
+        txrefElement.value = result.txDetails.txref;
+        updateTxDetails(result, isMainnet);
+      }, function (err) {
+        txidElement.value = "error looking up transaction. This may not a valid value";
+        clearStatusFull();
+      });
+  };
 
-      BtcrUtils.getDeterministicDdoFromTxref(txref)
-        .then(function (result) {
-          txidElement.value = result.txDetails.txid;
-          updateTxDetails(result, isMainnet);
-        }, function (err) {
-          txidElement.value = "error decoding txref. This may not a valid value";
-          clearStatusFull();
-        });
-    };
+  var convertFromTxref = function () {
+    var txrefElement = document.getElementById('txref');
+    var txidElement = document.getElementById('txid');
+    txidElement.value = "computing...";
+    var txref = txrefElement.value.trim();
+    var isMainnet = txref.charAt(4) == 'r';
 
-    var resolveFragment1 = function() {
-      var fragment1Element = document.getElementById('fragment1');
-      var request = new XMLHttpRequest();
-      request.addEventListener('load', function() {
-        var status = request.status;
-      if (status != 200) {
+    BtcrUtils.getDeterministicDdoFromTxref(txref)
+      .then(function (result) {
+        txidElement.value = result.txDetails.txid;
+        updateTxDetails(result, isMainnet);
+      }, function (err) {
+        txidElement.value = "error decoding txref. This may not a valid value";
+        clearStatusFull();
+      });
+  };
+
+  var resolveFragment1 = function() {
+    var fragment1Element = document.getElementById('fragment1');
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function() {
+      var status = request.status;if (status != 200) {
         // TODO: fail
       }
       try {
         var responseData = JSON.parse(request.responseText);
         fragment1Element.innerHTML = request.responseText;
-
       } catch (e) {
         // try next handler
         //return this._lookForTx(index + 1, items, completionCallback);
       }
     });
-      request.open('GET', fragment1Element.innerHTML);
-      request.responseType = "json";
-      request.send();
-
-    }
+    request.open('GET', fragment1Element.innerHTML);
+    request.responseType = "json";
+    request.send();
+  }
 
 
 </script>
