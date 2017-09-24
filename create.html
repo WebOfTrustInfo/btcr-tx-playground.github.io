@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Create a BTCR DID</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.5.0/sha256.min.js"></script>
+    <script src="btcrDidUtils.js"></script>
+    <script src="./forge.min.js"></script>
+</head>
+<body style="padding: 20px; font-family:Arial; background:#f2f2f2;">
+<h1>BTCR DID Creation Playground</h1>
+<div>
+
+    <p>
+        <ol>
+    <li>Create 2 testnet addresses at <a href="https://www.bitaddress.org/testnet=true" target="new">Bitaddress.org</a>. One will be the "input" address and the other an "output" address</li>
+    <li>Add funds to the "input" address. Search for testnet faucets if you don't have any to transfer.</li>
+    <li>Create an (optional) continuation DDO</li>
+    <li>Populate the fields below, note that the "WIF" is the secret key for the "input" address</li>
+</ol>
+    </p>
+
+    <h2>Enter your information</h2>
+    <div style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 600px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+    <p>
+        <label for="inputBitcoinAddress" style="vertical-align: middle;margin: 10px 0px; padding:5px 5px;">Funding Bitcoin Address</label><textarea contenteditable="true" style="vertical-align: middle;margin: 10px 0px;padding:5px 5px;" id="inputBitcoinAddress" cols="30"></textarea>
+        <br>
+        <label for="outputBitcoinAddress" style="vertical-align: middle;margin: 10px 0px;padding:5px 5px;">Output Bitcoin Address</label>
+        <textarea contenteditable="true" id="outputBitcoinAddress" cols="30" style="vertical-align: middle;margin: 10px 0px; padding:5px 5px;"></textarea>
+        <br>
+        <label for="wif" style="vertical-align: middle;margin: 10px 0px;padding:5px 5px;">WIF (secret key)</label>
+        <textarea contenteditable="true" id="wif" cols="50" style="vertical-align: middle;margin: 10px 0px;padding:5px 5px;"></textarea>
+        <br>
+        <label for="continuationDdo" style="vertical-align: middle;padding:5px 5px;;">Continuation DDO Link (Optional)</label>
+        <textarea contenteditable="true" id="continuationDdo" cols="50" style="vertical-align: middle;margin: 10px 0px; padding:5px 5px;"></textarea>
+        <br>
+
+    </p>
+    <button id="btn1" style="background:#32353a; color:#FFFFFF;" onclick="JavaScript:createDid()">Create DID</button>
+    </div>
+
+</div>
+
+<div>
+    <h2>BTCR DID</h2>
+    <div id="did" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+        <pre>
+
+        </pre>
+
+    </div>
+
+</div>
+
+<script>
+
+  var createDid = function () {
+    var inputBitcoinAddressElement = document.getElementById('inputBitcoinAddress');
+    var outputBitcoinAddressElement = document.getElementById('outputBitcoinAddress');
+    var wifElement = document.getElementById('wif');
+    var continuationDdoElement = document.getElementById('continuationDdo');
+
+    var input = inputBitcoinAddressElement.value.trim();
+    var output = outputBitcoinAddressElement.value.trim();
+    var wif = wifElement.value.trim();
+    var contDdo = null;
+    if (continuationDdoElement && continuationDdoElement.value) {
+      contDdo = continuationDdoElement.value.trim();
+    }
+
+    BtcrUtils.createBtcrDid(input, output, "testnet", wif, contDdo, 0.001)
+      .then(function (result) {
+        document.getElementById('did').innerHTML = "<pre>" + result + "</pre>";
+      }, function (err) {
+        document.getElementById('did').innerHTML = "error creating DID: " + err.toString();
+      });
+  };
+
+</script>
+
+
+</body>
+</html>
