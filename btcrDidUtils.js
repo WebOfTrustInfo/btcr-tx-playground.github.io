@@ -99,7 +99,7 @@ var createDidTx = function createDidTx(network, wif, unspentOutput, outputAddres
 };
 
 var createBtcrDid = function createBtcrDid(inputAddress, changeAddress, network, wif, ddo1Ref, fee) {
-  var theNetwork = network === "mainnet" ? bitcoin.networks.mainnet : bitcoin.networks.testnet;
+  var theNetwork = network === "mainnet" ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
   var connector = new ChainSoConnector(theNetwork);
 
@@ -146,13 +146,15 @@ var extractCompressedPublicKey = function extractCompressedPublicKey(script) {
   return pub;
 };
 
-var createUpdateDdo = function createUpdateDdo(outputAddress) {
+var createUpdateDdo = function createUpdateDdo(outputAddress, btcrDid) {
   return {
-    "capability": "UpdateDidDescription",
+    "permission": "UpdateDidDescription",
     "permittedProofType": [{
       "proofType": "SatoshiBlockchainSignature2017",
       "authenticationCredential": [{
         "type": ["EdDsaSAPublicKey", "CryptographicKey"],
+        "id": btcrDid + "/authenticationMaterial",
+        "owner": btcrDid,
         "hash-base58check": outputAddress
       }]
     }]
@@ -179,10 +181,9 @@ var fixAuthenticationCredentials = function fixAuthenticationCredentials(authent
     }
     if (!e.id) {
       if (e.publicKeyHex == publicKeyHex) {
-        e.id = btcrDid + "/keys/fundingKey";
-      } else {
+        e.id = btcrDid + "/authenticationMaterial";
         keyCounter++;
-        e.id = btcrDid + "/keys/" + keyCounter.toString();
+        e.id = btcrDid + "/authenticationMaterial";
       }
     }
     r.push(e);
@@ -229,14 +230,15 @@ async function toDeterministicDid(txDetails, txref) {
     ddoJson = JSON.parse(ddo1);
   }
 
+  var proofDdo = ddoJson.proof;
   var authorizations = [];
   // create "update" capability, which belongs to the transaction output
-  authorizations.push(createUpdateDdo(outputAddress));
+  authorizations.push(createUpdateDdo(outputAddress, btcrDid));
 
   // for each authorization, if missing an entity then add it.
   // fix nested authorization proof types
-  if (ddoJson && ddoJson.authorization) {
-    var fixedAuthorizations = ddoJson.authorization.reduce(function (r, e, i, a) {
+  if (ddoJson && ddoJson.authorizationCapability) {
+    var fixedAuthorizations = ddoJson.authorizationCapability.reduce(function (r, e, i, a) {
       if (!a.entity) {
         e.entity = btcrDid;
       }
@@ -248,19 +250,22 @@ async function toDeterministicDid(txDetails, txref) {
       return authorizations.push(e);
     });
   }
-  result.authorization = authorizations;
+  result.authorizationCapability = authorizations;
 
   // fix authentication credentials
   var fixedAuthenticationCredential = fixAuthenticationCredentials(ddoJson.authenticationCredential, btcrDid, publicKeyHex);
   result.authenticationCredential = fixedAuthenticationCredential;
 
-  var signature = {
-    "type": "SatoshiBlockchainSignature2017",
-    "id": btcrDid,
-    "chain": txDetails.chain
-  };
+  var proof = [{
+    "type": "SatoshiBlockchainProof2017",
+    "created": txDetails.txConfirmed,
+    "creator": "ecdsa-koblitz-pubkey:" + publicKeyHex
+  }];
+  if (proofDdo) {
+    proof.push(proofDdo);
+  }
 
-  result.signature = signature;
+  result.proof = proof;
 
   return result;
 }
@@ -285,8 +290,16 @@ async function getDeterministicDdoFromTxid(txid, chain) {
 
 // kim current: 67c0ee676221d9e0e08b98a55a8bf8add9cba854f13dda393e38ffa1b982b833
 // christopher past: f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107
+
+
+getDeterministicDdoFromTxref("txtest1-xkyt-fzgq-qq87-xnhn").then(function (dddo) {
+  console.log(JSON.stringify(dddo, null, 4));
+}, function (error) {
+  console.error(error);
+});
+
 /*
-getDeterministicDdoFromTxref("txtest1-xkyt-fzgq-qq87-xnhn").then(dddo => {
+getDeterministicDdoFromTxid("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "testnet").then(dddo => {
   console.log(JSON.stringify(dddo, null, 4));
 }, error => {
   console.error(error)
@@ -302,18 +315,18 @@ module.exports = {
 "use strict";
 
 var createBtcrDid = require("./createBtcrDid");
-var signClaim = require("./signClaim");
+var signDocuments = require("./signDocuments");
 var ddoFormatter = require("./ddoFormatter");
 
 module.exports = {
-  signClaim: signClaim.signClaim,
+  signDocument: signDocuments.signDocument,
   createBtcrDid: createBtcrDid.createBtcrDid,
   getDeterministicDdoFromTxref: ddoFormatter.getDeterministicDdoFromTxref,
   getDeterministicDdoFromTxid: ddoFormatter.getDeterministicDdoFromTxid
 
 };
 
-},{"./createBtcrDid":1,"./ddoFormatter":2,"./signClaim":140}],4:[function(require,module,exports){
+},{"./createBtcrDid":1,"./ddoFormatter":2,"./signDocuments":140}],4:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -31323,12 +31336,7 @@ function extend() {
 var bitcoin = require('bitcoinjs-lib');
 var jsonld = require('jsonld');
 var jsig = require('jsonld-signatures');
-
-var counterSign = false;
-
-var wif = process.env.WIF;
-
-var network = bitcoin.networks.testnet;
+var util = require('./util');
 
 var label = "kimh-knows-christophera";
 var did = "did:btcr:xgjd-xzvz-qq03-7as7";
@@ -31339,55 +31347,56 @@ var relationship = "colleague";
 var issuedDate = "2017-07-17";
 var alternateName = "christophera";
 
-var claim = null;
-if (counterSign) {
-  claim = {
-    "@context": ["https://schema.org/", "https://w3id.org/security/v1"],
-    "id": "did:btcr:xyv2-xzyq-qqm5-tyke/1#christophera-knows-kimh",
-    "type": ["Credential", "Identity", "Person"],
-    "issuer": "did:btcr:xyv2-xzyq-qqm5-tyke/0#did-transaction-key",
-    "issued": "2017-07-17",
-    "label": "christophera-knows-kimh",
-    "claim": {
-      "knows": "did:btcr:xgjd-xzvz-qq03-7as7",
-      "relationship": "colleague",
-      "alternate-name": "KimH"
-    },
-    "signature": {
-      "type": "EcdsaKoblitzSignature2016",
-      "created": "2017-07-17T18:41:40Z",
-      "creator": "ecdsa-koblitz-pubkey:036abdaaa4db47ba2c0b81ad9bbf7be85d04f0fd50a62c6754499ac299a7647270",
-      "signatureValue": "IPYL4YW8/G0m+EFiGBWoyF3rC3xqDntN2pZesAZFLwrVDg7OfB2KPtKPBBwMvcAWfroqKdY0m1Z8lJae0dlHvyQ="
-    }
-  };
-} else {
-  claim = {
-    "@context": ["https://schema.org/", "https://w3id.org/security/v1"],
-    "id": claimId,
-    "type": ["Credential", "Identity", "Person"],
-    "issuer": did0,
-    "issued": issuedDate,
-    "label": label,
-    "claim": {
-      "knows": recipientDid,
-      "relationship": relationship,
-      "alternate-name": alternateName
-    }
-  };
-}
+var claim2 = {
+  "@context": ["https://schema.org/", "https://w3id.org/security/v1"],
+  "id": "did:btcr:xyv2-xzyq-qqm5-tyke/1#christophera-knows-kimh",
+  "type": ["Credential", "Identity", "Person"],
+  "issuer": "did:btcr:xyv2-xzyq-qqm5-tyke/0#did-transaction-key",
+  "issued": "2017-07-17",
+  "label": "christophera-knows-kimh",
+  "claim": {
+    "knows": "did:btcr:xgjd-xzvz-qq03-7as7",
+    "relationship": "colleague",
+    "alternate-name": "KimH"
+  },
+  "signature": {
+    "type": "EcdsaKoblitzSignature2016",
+    "created": "2017-07-17T18:41:40Z",
+    "creator": "ecdsa-koblitz-pubkey:036abdaaa4db47ba2c0b81ad9bbf7be85d04f0fd50a62c6754499ac299a7647270",
+    "signatureValue": "IPYL4YW8/G0m+EFiGBWoyF3rC3xqDntN2pZesAZFLwrVDg7OfB2KPtKPBBwMvcAWfroqKdY0m1Z8lJae0dlHvyQ="
+  }
+};
 
-var signClaim = function signClaim() {
+var claim_1 = {
+  "@context": ["https://schema.org/", "https://w3id.org/security/v1"],
+  "id": claimId,
+  "type": ["Credential", "Identity", "Person"],
+  "issuer": did0,
+  "issued": issuedDate,
+  "label": label,
+  "claim": {
+    "knows": recipientDid,
+    "relationship": relationship,
+    "alternate-name": alternateName
+  }
+};
+
+async function signDocumentWithBitcoin(inputFile, wif, network, counterSign) {
+  var chain = network == "testnet" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+
+  var inputContents = await util.readFile(inputFile);
+  var inputJson = JSON.parse(inputContents);
+
   // get public key
-  var keyPair = bitcoin.ECPair.fromWIF(wif, network);
+  var keyPair = bitcoin.ECPair.fromWIF(wif, chain);
   keyPair.compressed = true;
   var publicKeyBuffer = keyPair.getPublicKeyBuffer();
   var publicKeyHex = publicKeyBuffer.toString('hex');
-
   var testPublicKeyFriendly = "ecdsa-koblitz-pubkey:" + publicKeyHex;
 
-  var originalSignature = claim.signature;
+  var originalSignature = inputJson.signature;
   jsig.use('jsonld', jsonld);
-  jsig.sign(claim, {
+  jsig.sign(inputJson, {
     algorithm: 'EcdsaKoblitzSignature2016',
     privateKeyWif: wif,
     creator: testPublicKeyFriendly
@@ -31396,21 +31405,50 @@ var signClaim = function signClaim() {
       console.error(err);
       process.exit(1);
     }
-
     if (counterSign) {
       // add back original signature if counter signing
       var signature = signedDocument.signature;
       signedDocument.signature = [originalSignature, signature];
     }
-
     console.log(JSON.stringify(signedDocument, null, 4));
   });
 };
 
 module.exports = {
-  signClaim: signClaim
+  signDocument: signDocumentWithBitcoin
 };
 
 }).call(this,require('_process'))
-},{"_process":86,"bitcoinjs-lib":23,"jsonld":82,"jsonld-signatures":79}]},{},[3])(3)
+},{"./util":141,"_process":86,"bitcoinjs-lib":23,"jsonld":82,"jsonld-signatures":79}],141:[function(require,module,exports){
+'use strict';
+
+var bitcoin = require('bitcoinjs-lib');
+var fs = require('fs');
+
+var publicKeyHexFromWif = function publicKeyHexFromWif(wif, network) {
+  var keyPair = bitcoin.ECPair.fromWIF(wif, network);
+  keyPair.compressed = true;
+  var publicKeyBuffer = keyPair.getPublicKeyBuffer();
+  var publicKeyHex = publicKeyBuffer.toString('hex');
+  return publicKeyHex;
+};
+
+var readFile = function readFile(path) {
+  return new Promise(function (resolve, reject) {
+    fs.readFile(path, 'utf8', function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+};
+
+module.exports = {
+  publicKeyHexFromWif: publicKeyHexFromWif,
+  readFile: readFile
+};
+
+},{"bitcoinjs-lib":23,"fs":53}]},{},[3])(3)
 });
