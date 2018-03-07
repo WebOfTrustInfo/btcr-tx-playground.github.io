@@ -30,7 +30,7 @@
         <h2>Find by TX Ref</h2>
         <div style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 500px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
             <p>
-                <textarea contenteditable="true" id="txref" cols="80">txtest1-xkyt-fzgq-qq87-xnhn</textarea>
+                <textarea contenteditable="true" id="txref" cols="80">did:btcr:xkyt-fzgq-qq87-xnhn</textarea>
             </p>
             <button id="btn2" style="background:#32353a; color:#FFFFFF;" onclick="JavaScript:convertFromTxref()">Convert from TX Ref</button>
         </div>
@@ -42,7 +42,7 @@
     <div style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 500px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
 
     <p>
-        <label for="txid" style="vertical-align: middle;margin: 10px 0px;">TXID</label><textarea contenteditable="true" style="vertical-align: middle;margin: 10px 0px;" id="txid" cols="70"></textarea>
+        <label for="txid" style="vertical-align: middle;margin: 10px 0px;">TXID</label><textarea contenteditable="true" style="vertical-align: middle;margin: 10px 0px;" id="txid" cols="71"></textarea>
         <br>
         OR
         <br>
@@ -67,14 +67,32 @@
 </div>
 
 <div>
-    <h2>DID Description</h2>
-    <div id="d-ddo" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+    <h2>DID Description Phase 1</h2>
+    Implicit DID Document from transaction
+    <div id="d-ddo1" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
         <pre>
 
         </pre>
 
     </div>
 
+    <h2>DID Description Phase 2</h2>
+    From transaction OP_RETURN
+    <div id="d-ddo2" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+        <pre>
+
+        </pre>
+
+    </div>
+
+    <h2>DID Description Phase 3</h2>
+    Composite DID Document
+    <div id="d-ddo3" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+        <pre>
+
+        </pre>
+
+    </div>
 </div>
 
 
@@ -93,7 +111,9 @@
   var updateTxDetails = function (result, isMainnet) {
     updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, isMainnet);
     updateTxLink(isMainnet, result.txDetails.txid);
-    document.getElementById('d-ddo').innerHTML = "<pre>" + JSON.stringify(result.ddo, null, 4) + "</pre>";
+    document.getElementById('d-ddo1').innerHTML = "<pre>" + JSON.stringify(result.ddophase1, null, 4) + "</pre>";
+    document.getElementById('d-ddo2').innerHTML = "<pre>" + JSON.stringify(result.ddophase2, null, 4) + "</pre>";
+    document.getElementById('d-ddo3').innerHTML = "<pre>" + JSON.stringify(result.ddophase3, null, 4) + "</pre>";
     //document.getElementById('fragment1').innerHTML = "<pre>" + JSON.stringify(result.fragment1, null, 4) + "</pre>";
   };
 
@@ -133,7 +153,7 @@
     txrefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
 
-    BtcrUtils.getDeterministicDdoFromTxid(txid, chain)
+    BtcrUtils.resolveFromTxid(txid, chain)
       .then(function (result) {
         txrefElement.value = result.txDetails.txref;
         updateTxDetails(result, isMainnet);
@@ -150,7 +170,7 @@
     var txref = txrefElement.value.trim();
     var isMainnet = txref.charAt(4) == 'r';
 
-    BtcrUtils.getDeterministicDdoFromTxref(txref)
+    BtcrUtils.resolveFromTxref(txref)
       .then(function (result) {
         txidElement.value = result.txDetails.txid;
         updateTxDetails(result, isMainnet);

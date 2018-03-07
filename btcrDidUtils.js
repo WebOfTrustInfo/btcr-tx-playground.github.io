@@ -227,7 +227,13 @@ async function addSupplementalDidDocuments(implicitDdo, txDetails, txref) {
     }
 }
 
-/**
+async function retrieveDdoFragment(ddoUrl) {
+    var ddo1 = await txRefConversion.promisifiedRequest({ "url": ddoUrl });
+    var ddoJson = JSON.parse(ddo1).didDocument;
+    return ddoJson;
+}
+
+/**r
  * TODO
  * - Update remaining satoshi proof elements
  * @param txDetails
@@ -246,7 +252,7 @@ function toImplicitDidDocument(txDetails, txref) {
         "@context": ["https://schema.org/", "https://w3id.org/security/v1"]
     };
 
-    var btcrDidComponent = txref.substring(txref.indexOf('-') + 1); // ?
+    var btcrDidComponent = txref; // txref.substring(txref.indexOf('-') + 1); // ?
     var btcrDid = "did:btcr:" + btcrDidComponent;
     var fundingScript = txDetails.inputs[0].script;
     var publicKeyHex = util.extractPublicKeyHexFromScript(fundingScript).toString();
@@ -287,7 +293,7 @@ function toImplicitDidDocument(txDetails, txref) {
         ddoJson.service = [{
             "type": "BTCREndpoint",
             "serviceEndpoint": ddoUrl,
-            "timestamp": "????"
+            "timestamp": txDetails.timereceived // TODO
         }];
     }
 
@@ -296,24 +302,38 @@ function toImplicitDidDocument(txDetails, txref) {
 
 async function toDidDocument(txDetails, txref) {
     var implicitDdo = toImplicitDidDocument(txDetails, txref);
-    var ddo = await addSupplementalDidDocuments(implicitDdo, txDetails, txref);
-    return ddo;
+    var implicitDdoCopy = JSON.parse(JSON.stringify(implicitDdo));
+
+    var result = {
+        "txDetails": txDetails,
+        "ddophase1": implicitDdo
+    };
+
+    if (implicitDdo.service && implicitDdo.service.length == 1 && implicitDdo.service[0].serviceEndpoint) {
+        var ddoJson = await retrieveDdoFragment(implicitDdo.service[0].serviceEndpoint);
+        result.ddophase2 = ddoJson;
+        var ddo = await addSupplementalDidDocuments(implicitDdoCopy, txDetails, txref);
+        result.ddo = ddo;
+        result.ddophase3 = ddo;
+    } else {
+        result.ddo = implicitDdoCopy;
+        result.ddophase3 = implicitDdoCopy;
+    }
+
+    return result;
 }
 
-async function getDeterministicDdoFromTxref(txref) {
+async function resolveFromTxref(txref) {
     if (!txref) {
         throw "Missing txref argument";
     }
     var cleanedTxref = util.ensureTxref(txref);
     var txDetails = await txRefConversion.txDetailsFromTxref(cleanedTxref);
     var deterministicDid = await toDidDocument(txDetails, cleanedTxref);
-    return {
-        "txDetails": txDetails,
-        "ddo": deterministicDid
-    };
+    return deterministicDid;
 }
 
-async function getDeterministicDdoFromTxid(txid, chain) {
+async function resolveFromTxid(txid, chain) {
     if (!txid) {
         throw "Missing txid argument";
     }
@@ -322,29 +342,25 @@ async function getDeterministicDdoFromTxid(txid, chain) {
     }
     var txDetails = await txRefConversion.txDetailsFromTxid(txid, chain);
     var deterministicDid = await toDidDocument(txDetails, util.ensureTxref(txDetails.txref));
-    return {
-        "txDetails": txDetails,
-        "ddo": deterministicDid
-    };
+    return deterministicDid;
 }
 
-/*
-getDeterministicDdoFromTxref("did:btcr:txtest1-xkyt-fzgq-qq87-xnhn").then(dddo => {
-  console.log(JSON.stringify(dddo, null, 4));
-}, error => {
-  console.error(error)
-});*/
+resolveFromTxref("xkyt-fzgq-qq87-xnhn").then(function (dddo) {
+    console.log(JSON.stringify(dddo, null, 4));
+}, function (error) {
+    console.error(error);
+});
 
 /*
-getDeterministicDdoFromTxid("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "testnet").then(dddo => {
+resolveFromTxid("f8cdaff3ebd9e862ed5885f8975489090595abe1470397f79780ead1c7528107", "testnet").then(dddo => {
   console.log(JSON.stringify(dddo, null, 4));
 }, error => {
   console.error(error)
 });*/
 
 module.exports = {
-    getDeterministicDdoFromTxref: getDeterministicDdoFromTxref,
-    getDeterministicDdoFromTxid: getDeterministicDdoFromTxid
+    resolveFromTxref: resolveFromTxref,
+    resolveFromTxid: resolveFromTxid
 };
 
 },{"./util":142,"txref-conversion-js":126}],3:[function(require,module,exports){
@@ -352,17 +368,17 @@ module.exports = {
 
 var createBtcrDid = require("./createBtcrDid");
 var signClaim = require("./signClaim");
-var ddoFormatter = require("./ddoFormatter");
+var ddoResolver = require("./ddoResolver");
 
 module.exports = {
   signClaim: signClaim.signClaim,
   createBtcrDid: createBtcrDid.createBtcrDid,
-  getDeterministicDdoFromTxref: ddoFormatter.getDeterministicDdoFromTxref,
-  getDeterministicDdoFromTxid: ddoFormatter.getDeterministicDdoFromTxid
+  resolveFromTxref: ddoResolver.resolveFromTxref,
+  resolveFromTxid: ddoResolver.resolveFromTxid
 
 };
 
-},{"./createBtcrDid":1,"./ddoFormatter":2,"./signClaim":141}],4:[function(require,module,exports){
+},{"./createBtcrDid":1,"./ddoResolver":2,"./signClaim":141}],4:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -28747,11 +28763,24 @@ var txrefEncode = function (chain, blockHeight, txPos) {
     result.substring(breakIndex + 4, breakIndex + 8) + "-" +
     result.substring(breakIndex + 8, breakIndex + 12) + "-" +
     result.substring(breakIndex + 12, result.length);
-  return finalResult;
+
+  var indexOf = finalResult.indexOf("txtest1");
+  if (indexOf > 0) {
+    let snip = finalResult.indexOf("-", indexOf + 1);
+    return finalResult.substr(snip + 1);
+  }
+  indexOf = finalResult.indexOf("tx1");
+  let snip2 = finalResult.indexOf("-", indexOf + 1);
+  return finalResult.substr(snip2 + 1);
 };
 
 
 var txrefDecode = function (bech32Tx) {
+  if (bech32Tx.startsWith("x")) {
+    bech32Tx = "txtest1-" + bech32Tx;
+  } else {
+    bech32Tx = "tx1-" + bech32Tx;
+  }
   let stripped = bech32Tx.replace(/-/g, '');
 
   let result = bech32.decode(stripped);
@@ -28948,8 +28977,9 @@ module.exports = {
   promisifiedRequest: promisifiedRequests.request
 };
 
+
 /*
-txrefToTxid("tx1-rk63-uvxf-9pqc-sy")
+txrefToTxid("rk63-uvxf-9pqc-sy")
   .then(result => {
     console.log(result);
   }, error => {
@@ -28958,9 +28988,8 @@ txrefToTxid("tx1-rk63-uvxf-9pqc-sy")
 
 txDetailsFromTxid("2960626c1c538ef120743753d834dd493361177edea2985caf1a678f690e0029", "testnet").then( result => {
  console.log(result);
- });*/
-
-
+ });
+*/
 
 },{"./bech32":124,"./promisifiedRequests":125}],127:[function(require,module,exports){
 var native = require('./native')
