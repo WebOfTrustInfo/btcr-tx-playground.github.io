@@ -30,7 +30,11 @@
         <h2>Find by TX Ref</h2>
         <div style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 500px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
             <p>
-                <textarea contenteditable="true" id="txref" cols="80">did:btcr:xkyt-fzgq-qq87-xnhn</textarea>
+
+                <select name="btn2" id="txref">
+                    <option value="did:btcr:xkyt-fzgq-qq87-xnhn">did:btcr:xkyt-fzgq-qq87-xnhn</option>
+                    <option value="did:btcr:xyv2-xzyq-qqm5-tyke">did:btcr:xyv2-xzyq-qqm5-tyke</option>
+                </select>
             </p>
             <button id="btn2" style="background:#32353a; color:#FFFFFF;" onclick="JavaScript:convertFromTxref()">Convert from TX Ref</button>
         </div>
