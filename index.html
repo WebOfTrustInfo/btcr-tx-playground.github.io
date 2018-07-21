@@ -57,7 +57,10 @@
         <label for="blockPosition" style="vertical-align: middle">Position</label>
         <textarea contenteditable="true" id="blockPosition" cols="20" style="vertical-align: middle;margin: 10px 0px;"></textarea>
         <br>
-
+        <i>OPTIONAL</i>
+        <br>
+        <label for="utxoIndex" style="vertical-align: middle;margin: 10px 0px;">Tx Output</label>
+        <textarea contenteditable="true" id="utxoIndex" cols="20" style="vertical-align: middle;margin: 10px 0px;">0</textarea>
 
         <fieldset style="border:#BBBDD6 solid 1px; padding:1px 10px;">
     <legend>Select blockchain</legend>
@@ -123,7 +126,7 @@
   };
 
   var updateTxDetails = function (result, isMainnet) {
-    updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, isMainnet);
+    updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, result.txDetails.utxoIndex, isMainnet);
     updateTxLink(isMainnet, result.txDetails.txid);
 
     document.getElementById('d-ddo1').innerHTML = "<pre>" + JSON.stringify(result.ddophase1, null, 4) + "</pre>";
@@ -138,7 +141,7 @@
     return txLink;
   };
 
-  var updateBlockHeightAndPos = function (blockHeight, blockIndex, isMainnet) {
+  var updateBlockHeightAndPos = function (blockHeight, blockIndex, utxoIndex, isMainnet) {
     // update mainnet/testnet
     if (isMainnet) {
       document.getElementById('mainnetChain').checked = true;
@@ -151,6 +154,7 @@
 
     document.getElementById('blockHeight').value = blockHeight;
     document.getElementById('blockPosition').value = blockIndex;
+    document.getElementById('utxoIndex').value = utxoIndex;
   };
 
   var updateTxLink = function (isMainnet, txid) {
@@ -162,6 +166,7 @@
 
   var convertFromTxid = function () {
     var txidElement = document.getElementById('txid');
+    var utxoIndexElement = document.getElementById('utxoIndex');
     var txrefElement = document.getElementById('txref');
     var isMainnet = document.getElementById('mainnetChain').checked;
     var txid = txidElement.value.trim();
