@@ -176,7 +176,6 @@
 
     BtcrUtils.resolveFromTxid(txid, chain)
       .then(function (result) {
-        console.log('convertFromTxid  results yo');
         txrefElement.value = result.txDetails.txref;
         updateTxDetails(result, isMainnet);
       }, function (err) {
@@ -194,7 +193,6 @@
 
     BtcrUtils.resolveFromTxref(txref)
       .then(function (result) {
-        console.log('results yo');
         txidElement.value = result.txDetails.txid;
         updateTxDetails(result, isMainnet);
       }, function (err) {

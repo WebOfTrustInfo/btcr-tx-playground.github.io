@@ -228,7 +228,6 @@ async function addSupplementalDidDocuments(implicitDdo, txDetails, txref) {
 }
 
 async function retrieveDdoFragment(ddoUrl) {
-    console.log('retrieveDdoFragment');
     var ddo1 = await txRefConversion.promisifiedRequest({ "url": ddoUrl });
     var ddoJson = JSON.parse(ddo1).didDocument;
     var vcJson = JSON.parse(ddo1).claims;
@@ -311,11 +310,10 @@ async function toDidDocument(txDetails, txref) {
         "ddophase1": implicitDdo
     };
 
-    console.log('toDidDocument');
     if (implicitDdo.service && implicitDdo.service.length == 1 && implicitDdo.service[0].serviceEndpoint) {
         var endpointJson = await retrieveDdoFragment(implicitDdo.service[0].serviceEndpoint);
-	var ddoJson = endpointJson[0];
-	var vcJson = endpointJson[1];
+        var ddoJson = endpointJson[0];
+        var vcJson = endpointJson[1];
 	result.vc = vcJson
         result.ddophase2 = ddoJson;
         var ddo = await addSupplementalDidDocuments(implicitDdoCopy, txDetails, txref);
@@ -330,13 +328,11 @@ async function toDidDocument(txDetails, txref) {
 }
 
 async function resolveFromTxref(txref) {
-    console.log('!!!!!!!!!!!!!!!!!');
     if (!txref) {
         throw "Missing txref argument";
     }
     var txDetails = await util.txDetailsFromTxref(txref);
     var deterministicDid = await toDidDocument(txDetails, txref);
-    console.log('resolve from txref');
     return deterministicDid;
 }
 
@@ -349,7 +345,6 @@ async function resolveFromTxid(txid, txOut, chain) {
     }
     var txDetails = await util.txDetailsFromTxid(txid, txOut, chain);
     var deterministicDid = await toDidDocument(txDetails, txDetails.txref);
-    console.log('resolve from txid');
     return deterministicDid;
 }
 
