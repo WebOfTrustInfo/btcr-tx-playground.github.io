@@ -230,7 +230,9 @@ async function addSupplementalDidDocuments(implicitDdo, txDetails, txref) {
 async function retrieveDdoFragment(ddoUrl) {
     var ddo1 = await txRefConversion.promisifiedRequest({ "url": ddoUrl });
     var ddoJson = JSON.parse(ddo1).didDocument;
-    return ddoJson;
+    var vcJson = JSON.parse(ddo1).claims;
+    return [ddoJson, vcJson];
+    //return ddoJson;
 }
 
 /**r
@@ -309,7 +311,10 @@ async function toDidDocument(txDetails, txref) {
     };
 
     if (implicitDdo.service && implicitDdo.service.length == 1 && implicitDdo.service[0].serviceEndpoint) {
-        var ddoJson = await retrieveDdoFragment(implicitDdo.service[0].serviceEndpoint);
+        var endpointJson = await retrieveDdoFragment(implicitDdo.service[0].serviceEndpoint);
+        var ddoJson = endpointJson[0];
+        var vcJson = endpointJson[1];
+	result.vc = vcJson
         result.ddophase2 = ddoJson;
         var ddo = await addSupplementalDidDocuments(implicitDdoCopy, txDetails, txref);
         result.ddo = ddo;

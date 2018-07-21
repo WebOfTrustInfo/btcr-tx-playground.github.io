@@ -93,6 +93,14 @@
 
     </div>
 
+    Verifiable Claims
+    <div id="vc" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+        <pre>
+
+        </pre>
+
+    </div>
+
     <h2>DID Description Phase 3</h2>
     Composite DID Document
     <div id="d-ddo3" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
@@ -101,6 +109,7 @@
         </pre>
 
     </div>
+
 </div>
 
 
@@ -119,8 +128,10 @@
   var updateTxDetails = function (result, isMainnet) {
     updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, result.txDetails.utxoIndex, isMainnet);
     updateTxLink(isMainnet, result.txDetails.txid);
+
     document.getElementById('d-ddo1').innerHTML = "<pre>" + JSON.stringify(result.ddophase1, null, 4) + "</pre>";
     document.getElementById('d-ddo2').innerHTML = "<pre>" + JSON.stringify(result.ddophase2, null, 4) + "</pre>";
+    document.getElementById('vc').innerHTML = "<pre>" + JSON.stringify(result.vc, null, 4) + "</pre>";
     document.getElementById('d-ddo3').innerHTML = "<pre>" + JSON.stringify(result.ddophase3, null, 4) + "</pre>";
     //document.getElementById('fragment1').innerHTML = "<pre>" + JSON.stringify(result.fragment1, null, 4) + "</pre>";
   };
