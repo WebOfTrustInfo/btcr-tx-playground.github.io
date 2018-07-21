@@ -159,11 +159,12 @@
     var txrefElement = document.getElementById('txref');
     var isMainnet = document.getElementById('mainnetChain').checked;
     var txid = txidElement.value.trim();
+    var utxoIndex = utxoIndexElement.value.trim();
 
     txrefElement.value = "computing...";
     var chain = isMainnet ? "mainnet" : "testnet";
 
-    BtcrUtils.resolveFromTxid(txid, chain)
+    BtcrUtils.resolveFromTxid(txid, chain, utxoIndex)
       .then(function (result) {
         txrefElement.value = result.txDetails.txref;
         updateTxDetails(result, isMainnet);
