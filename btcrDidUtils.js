@@ -32329,5 +32329,5 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"bitcoinjs-lib":23,"buffer":57,"txref-conversion-js":126}]},{},[3])(3)
+},{"bitcoinjs-lib":26,"buffer":61,"txref-conversion-js":131}]},{},[3])(3)
 });
