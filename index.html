@@ -40,8 +40,8 @@
             <p>
                 <input type="text" name="btn2" id="txref" size="40" width="40" list="examples"/>
                 <datalist id="examples">
-                    <option value="did:btcr:txtest1:8kyt-fzzq-qqqq-ase0-d8">did:btcr:txtest1:8kyt-fzzq-qqqq-ase0-d8</option>
-                    <option value="did:btcr:txtest1:8yv2-xzpq-qqqq-9yce-nk">did:btcr:txtest1:8yv2-xzpq-qqqq-9yce-nk</option>
+                    <option value="did:btcr:8kyt-fzzq-qqqq-ase0-d8">did:btcr:8kyt-fzzq-qqqq-ase0-d8</option>
+                    <option value="did:btcr:8yv2-xzpq-qqqq-9yce-nk">did:btcr:8yv2-xzpq-qqqq-9yce-nk</option>
                 </datalist>
 
             </p>
@@ -196,7 +196,7 @@
     var txidElement = document.getElementById('txid');
     txidElement.value = "computing...";
     var txref = txrefElement.value.trim();
-    var isMainnet = txref.charAt(4) == 'r';
+    var isMainnet = txref.charAt(4) == 'r'; // TODO!!
 
     BtcrUtils.resolveFromTxref(txref)
       .then(function (result) {

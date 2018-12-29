@@ -352,8 +352,11 @@ async function resolveFromTxid(txid, chain) {
 // xkyt-fzgq-qq87-xnhn
 // did:btcr:xyv2-xzyq-qqm5-tyke
 
+// did:btcr:txtest1:8kyt-fzzq-qqqq-ase0-d8
+// did:btcr:8kyt-fzzq-qqqq-ase0-d8
+
 /*
-resolveFromTxref("did:btcr:xyv2-xzyq-qqm5-tyke").then(dddo => {
+resolveFromTxref("did:btcr:8kyt-fzzq-qqqq-ase0-d8").then(dddo => {
   console.log(JSON.stringify(dddo, null, 4));
 }, error => {
   console.error(error)
@@ -31961,6 +31964,9 @@ var bitcoin = require('bitcoinjs-lib');
 var txRefConversion = require("txref-conversion-js");
 
 var BTCR_PREFIX = "did:btcr:";
+var TXREF_MAIN_PREFIX = "tx1:";
+var TXREF_TEST_PREFIX = "txtest1:";
+
 var COMPRESSED_PUBLIC_KEY_BYTE_LEN = 33;
 var COMPRESSED_PUBLIC_KEY_HEX_LEN = COMPRESSED_PUBLIC_KEY_BYTE_LEN * 2;
 
@@ -31984,10 +31990,16 @@ var ensureTxref = function ensureTxref(txrefCandidate) {
         txref = txrefCandidate.substr(BTCR_PREFIX.length);
     }
 
-    if (!txref.startsWith("txtest") && txref.startsWith("x")) {
-        txref = "txtest1-" + txref;
-    } else if (!txref.startsWith("tx")) {
-        txref = "tx1-" + txref;
+    if (txref.startsWith(TXREF_TEST_PREFIX) || txref.startsWith(TXREF_MAIN_PREFIX)) {
+        return txref;
+    }
+
+    if (txref.startsWith("x") || txref.startsWith("8")) {
+        txref = TXREF_TEST_PREFIX + txref;
+    } else if (txref.startsWith("r") || txref.startsWith("y")) {
+        txref = TXREF_MAIN_PREFIX + txref;
+    } else {
+        throw "this isn't a txref candidate: " + txref;
     }
     return txref;
 };
@@ -31998,10 +32010,10 @@ var ensureBtcrDid = function ensureBtcrDid(btcrDidCandidate) {
     }
 
     var btcrDid = btcrDidCandidate;
-    if (btcrDid.startsWith("txtest1-")) {
-        btcrDid = btcrDid.substr("txtest1-".length);
-    } else if (btcrDid.startsWith("tx1-")) {
-        btcrDid = btcrDid.substr("tx1-".length);
+    if (btcrDid.startsWith(TXREF_TEST_PREFIX)) {
+        btcrDid = btcrDid.substr(TXREF_TEST_PREFIX.length);
+    } else if (btcrDid.startsWith(TXREF_MAIN_PREFIX)) {
+        btcrDid = btcrDid.substr(TXREF_MAIN_PREFIX.length);
     }
 
     if (!btcrDid.startsWith(BTCR_PREFIX)) {
