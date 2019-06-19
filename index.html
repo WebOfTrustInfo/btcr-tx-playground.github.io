@@ -83,8 +83,9 @@
 </div>
 
 <div>
-    <h2>DID Description Phase 1</h2>
-    Implicit DID Document from transaction
+    <h2>Results</h2>
+
+    <h3>DID Document</h3>
     <div id="d-ddo1" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
         <pre>
 
@@ -92,16 +93,7 @@
 
     </div>
 
-    <h2>DID Description Phase 2</h2>
-    From transaction OP_RETURN
-    <div id="d-ddo2" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
-        <pre>
-
-        </pre>
-
-    </div>
-
-     Verifiable Claims
+    <h3>Verifiable Claims</h3>
      <div id="vc" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
          <pre>
  
@@ -109,14 +101,20 @@
 
      </div>
 
-    <h2>DID Description Phase 3</h2>
-    Composite DID Document
-    <div id="d-ddo3" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
-        <pre>
+    <h3>Errors</h3>
+    <div id="errors" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+         <pre>
 
-        </pre>
-
+         </pre>
     </div>
+
+    <h3>Raw</h3>
+    <div id="raw" style="color:#474774; background:#FFFFFF; border:#BBBDD6 solid 5px; padding:10px 10px; max-width: 1000px;box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);">
+         <pre>
+
+         </pre>
+    </div>
+
 </div>
 
 
@@ -133,13 +131,22 @@
   };
 
   var updateTxDetails = function (result, isMainnet) {
-    updateBlockHeightAndPos(result.txDetails.blockHeight, result.txDetails.blockIndex, result.txDetails.utxoIndex, isMainnet);
-    updateTxLink(isMainnet, result.txDetails.txid);
-    document.getElementById('d-ddo1').innerHTML = "<pre>" + JSON.stringify(result.ddophase1, null, 4) + "</pre>";
-    document.getElementById('d-ddo2').innerHTML = "<pre>" + JSON.stringify(result.ddophase2, null, 4) + "</pre>";
-    document.getElementById('vc').innerHTML = "<pre>" + JSON.stringify(result.vc, null, 4) + "</pre>";
-    document.getElementById('d-ddo3').innerHTML = "<pre>" + JSON.stringify(result.ddophase3, null, 4) + "</pre>";
-    //document.getElementById('fragment1').innerHTML = "<pre>" + JSON.stringify(result.fragment1, null, 4) + "</pre>";
+      let txDetails = result.txDetails;
+      let ddoResult = result.ddoResult;
+
+      updateBlockHeightAndPos(txDetails.blockHeight, txDetails.blockIndex, txDetails.utxoIndex, isMainnet);
+      updateTxLink(isMainnet, txDetails.txid);
+
+      let ddo1 = ddoResult.implicitDdo ? ddoResult.implicitDdo : ddoResult.explicitDdo;
+
+      if (ddo1) {
+          document.getElementById('d-ddo1').innerHTML = "<pre>" + JSON.stringify(ddo1.didDocument, null, 4) + "</pre>";
+          document.getElementById('vc').innerHTML = "<pre>" + JSON.stringify(ddo1.claims, null, 4) + "</pre>";
+      } else {
+          document.getElementById('raw').innerHTML = "<pre>" + ddoResult.raw + "</pre>";
+          document.getElementById('errors').innerHTML = "<pre>" + JSON.stringify(ddoResult.error, null, 4) + "</pre>";
+
+      }
   };
 
   var formatUrl = function (theUrl) {
@@ -207,27 +214,6 @@
         clearStatus();
       });
   };
-
-  var resolveFragment1 = function() {
-    var fragment1Element = document.getElementById('fragment1');
-    var request = new XMLHttpRequest();
-    request.addEventListener('load', function() {
-      var status = request.status;if (status != 200) {
-        // TODO: fail
-      }
-      try {
-        var responseData = JSON.parse(request.responseText);
-        fragment1Element.innerHTML = request.responseText;
-      } catch (e) {
-        // try next handler
-        //return this._lookForTx(index + 1, items, completionCallback);
-      }
-    });
-    request.open('GET', fragment1Element.innerHTML);
-    request.responseType = "json";
-    request.send();
-  }
-
 
 </script>
 
