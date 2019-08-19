@@ -16877,7 +16877,7 @@ jsonld.documentLoaders.xhr = function(options) {
         'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
         {contextUrl: null, documentUrl: url, document: null});
     }
-    var xhr = options.xhr || XMLHttpRequest;
+    var xhr = options.xhr || xmlhttprequest;
     var req = new xhr();
     req.onload = function() {
       if(req.status >= 400) {
@@ -23068,7 +23068,7 @@ function _removeDotSegments(path, hasAuthority) {
 if(_nodejs) {
   // use node document loader by default
   jsonld.useDocumentLoader('node');
-} else if(typeof XMLHttpRequest !== 'undefined') {
+} else if(typeof xmlhttprequest !== 'undefined') {
   // use xhr document loader by default
   jsonld.useDocumentLoader('xhr');
 }
@@ -28349,8 +28349,8 @@ function getXHR () {
 	// Cache the xhr value
 	if (xhr !== undefined) return xhr
 
-	if (global.XMLHttpRequest) {
-		xhr = new global.XMLHttpRequest()
+	if (global.xmlhttprequest) {
+		xhr = new global.xmlhttprequest()
 		// If XDomainRequest is available (ie only, where xhr might not work
 		// cross domain), use the page location. Otherwise use example.com
 		// Note: this doesn't actually make an http request.
@@ -28571,7 +28571,7 @@ ClientRequest.prototype._onFinish = function () {
 				self.emit('error', reason)
 		})
 	} else {
-		var xhr = self._xhr = new global.XMLHttpRequest()
+		var xhr = self._xhr = new global.xmlhttprequest()
 		try {
 			xhr.open(self._opts.method, self._opts.url, true)
 		} catch (err) {
@@ -29487,11 +29487,11 @@ function decode (bechString) {
 }
 
 },{}],142:[function(require,module,exports){
-var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+var xmlhttprequest = require("xmlhttprequest").xmlhttprequest;
 
 let request = obj => {
   return new Promise((resolve, reject) => {
-    let request = new XMLHttpRequest();
+    let request = new xmlhttprequest();
 
     request.timeout = 5000;
     request.addEventListener('load', () => {
@@ -31287,7 +31287,7 @@ var Url = require("url");
 var spawn = require("child_process").spawn;
 var fs = require("fs");
 
-exports.XMLHttpRequest = function() {
+exports.xmlhttprequest = function() {
   "use strict";
 
   /**
@@ -31310,7 +31310,6 @@ exports.XMLHttpRequest = function() {
 
   // Set some default headers
   var defaultHeaders = {
-    "User-Agent": "node-XMLHttpRequest",
     "Accept": "*/*",
   };
 
@@ -31574,7 +31573,7 @@ exports.XMLHttpRequest = function() {
     // Load files off the local filesystem (file://)
     if (local) {
       if (settings.method !== "GET") {
-        throw new Error("XMLHttpRequest: Only GET method is supported");
+        throw new Error("xmlhttprequest: Only GET method is supported");
       }
 
       if (settings.async) {
