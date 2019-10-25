@@ -1,0 +1,101 @@
+<html lang="en">
+	<head>
+		<title>BTCR TX Playground</title>
+		
+		<script src="external/txref-conversion-js/txrefConverter-browserified.js"></script>
+		<script src="build/btcrDidUtils.js"></script>
+		<script src="js/playground.js"></script>
+	</head>
+	<body>
+		<a href="#home" class="navbar-brand" id="homeBtn">BTCR Playground</a>
+
+		<div class="tab-pane tab-content active" id="home">
+
+			<div class="jumbotron">
+				<h1>BTCR TX Conversion Playground</h1>
+				This is the BTCR DID Method playground.
+			</div>
+
+			<div class="container">
+
+				<div class="row">
+					<h2>Select blockchain</h2>
+					<label class="form-check-label" for="testnet3Chain">testnet</label>
+					<input type="radio" class="form-check-input" id="testnet3Chain" name="chainSelection" value="testnet3" checked="checked" />
+					<label class="form-check-label" for="mainnetChain">mainnet</label>
+					<input type="radio" class="form-check-input" id="mainnetChain" name="chainSelection" value="mainnet" />
+				</div>
+
+				<div class="row">
+					<h2>Find by TX Ref</h2>
+					<input type="text" class="form-control" name="btn2" id="txref" list="examples"/>
+					<datalist id="examples">
+						<option value="did:btcr:8kyt-fzzq-qqqq-ase0-d8">did:btcr:8kyt-fzzq-qqqq-ase0-d8</option>
+						<option value="did:btcr:8yv2-xzpq-qqqq-9yce-nk">did:btcr:8yv2-xzpq-qqqq-9yce-nk</option>
+					</datalist>
+					<button class="btn btn-primary" id="btn2" onclick="JavaScript:convertFromTxref()" data-toggle="modal" data-target="#exampleModal">Convert from TX Ref</button>
+				</div>
+
+				<div class="row">
+					<h2>Find by Transaction Information</h2>
+					<input type="text" contenteditable="true" class="form-control" id="txid" placeholder="transaction ID" />		
+				</div>
+
+				<div class="row">
+					<h2>Find by Blockchain Position</h2>
+					<div class="col">
+						<input type="text" contenteditable="true" class="form-control" id="blockHeight" placeholder="blockheight" />
+					</div>
+					<div class="col">
+						<input type="text" contenteditable="true" class="form-control" id="blockPosition" placeholder="position" />		
+					</div>
+					<div class="col">
+						<input type="text" contenteditable="true" class="form-control" id="utxoIndex" placeholder="transaction output (optional)" />
+					</div>
+					<button class="btn btn-primary" id="btn1" onclick="JavaScript:convertFromTxid()" data-toggle="modal" data-target="#exampleModal">Convert from TXID</button>
+				</div>
+			</div>
+
+			<!-- Modal -->
+			<div class="modal fade" id="modalHome" tabindex="-1" role="dialog" aria-labelledby="modalHome" aria-hidden="true">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h4 class="modal-title" id="resultsModalLabel">Results</h4>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">Close</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<div class="container-fluid">
+								<div class="row">
+									<h5>DID Document</h5>
+									<div id="d-ddo1" class="alert alert-success"></div>
+								</div>
+
+								<div class="row">
+									<h5>Verifiable Claims</h5>
+									<div id="vc" class="alert alert-success" ></div>
+								</div>
+
+								<div class="row">
+									<h5>Errors</h5>
+									<div id="errors" class="alert alert-success"></div>
+								</div>
+
+								<div class="row">
+									<h5>Raw</h5>
+									<div id="raw" class="alert alert-success"></div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</body>
+</html>

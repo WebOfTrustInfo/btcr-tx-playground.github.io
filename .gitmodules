@@ -1,0 +1,9 @@
+[submodule "external/coinbin"]
+	path = external/coinbin
+	url = https://github.com/OutCast3k/coinbin.git
+[submodule "external/btcr-did-tools-js"]
+	path = external/btcr-did-tools-js
+	url = https://github.com/WebOfTrustInfo/btcr-did-tools-js.git
+[submodule "external/txref-conversion-js"]
+	path = external/txref-conversion-js
+	url = https://github.com/WebOfTrustInfo/txref-conversion-js.git
