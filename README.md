@@ -4,23 +4,27 @@
 In order to build btcr-did-tools-js for use in the browser we need to use browserify to convert the nodejs javascript.
 
 ```bash
-sudo apt-get install nodejs-dev node-gyp libssl1.0-dev
+sudo apt-get install xsltproc nodejs-dev node-gyp libssl1.0-dev
 sudo apt-get install npm
 sudo npm install -g browserify babelify jsonld jsonld-signatures commander \
-bitcoinjs-lib txref-conversion-js babel-preset-es2015
+bitcoinjs-lib babel-preset-es2015
 ```
 
 ## Installation
-The playground is build ontop of the [coinbin](https://github.com/OutCast3k/coinbin/) wallet and utilises [btcr-did-tools-js](https://github.com/WebOfTrustInfo/btcr-did-tools-js).  These dependencies need to be added so that the resources can be utilised by the playground.
+The playground is build ontop of the [coinbin](https://github.com/OutCast3k/coinbin/) wallet and utilises [btcr-did-tools-js](https://github.com/WebOfTrustInfo/btcr-did-tools-js), which in turn utilises [txref-conversion-js](https://github.com/WebOfTrustInfo/txref-conversion-js).
+
+The dependencies have been added as submodules so when you first clone this reposiroty there will be file placeholders for the external repositories in the 'external' folder.  These will need to be imported using the `git submodule init` and `git submodule update` commands.
+
+Some files need to be built so we use browserify to create build/btcrDidUtils.js and xsltproc to build the ./index.html file from external/coinbin/index.html.  The xsltproc step is configured in Make.
 
 ```bash
 git clone https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io.git
 cd btcr-tx-playground.github.io
-mkdir -p {external,build}
-git submodule add https://github.com/OutCast3k/coinbin.git external/coinbin
-git submodule add https://github.com/WebOfTrustInfo/btcr-did-tools-js external/btcr-did-tools-js
+git submodule init
+git submodule update
 cd external/btcrDidUtils.js
 browserify index.js --s BtcrUtils -t [ babelify --presets [ babel-presetes2015 ] ] -o ../../build/btcrDidUtils.js
+make
 ```
 
 ## Making changes this code
