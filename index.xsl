@@ -79,6 +79,17 @@
 	<xsl:template match="//a[@id='homeBtn']">
 		<xsl:copy-of select="$home//body/a[@id='homeBtn']" />
 	</xsl:template>
+	<!-- replace the About tab -->
+	<xsl:template match="//div[@id='about']">
+		<xsl:copy-of select="$home//body/div[@id='about']" />
+	</xsl:template>
+	<!-- Replace links on footer -->
+	<xsl:template match="//a[@href='https://github.com/OutCast3k/coinbin/']/@href">
+		<xsl:attribute name="href">
+			<xsl:value-of select="'https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io'"/>
+		</xsl:attribute>
+	</xsl:template>
+	
 
 
 	<!--

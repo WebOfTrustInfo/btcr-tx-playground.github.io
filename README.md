@@ -15,7 +15,7 @@ The playground is build ontop of the [coinbin](https://github.com/OutCast3k/coin
 
 The dependencies have been added as submodules so when you first clone this reposiroty there will be file placeholders for the external repositories in the 'external' folder.  These will need to be imported using the `git submodule init` and `git submodule update` commands.
 
-Some files need to be built so we use browserify to create build/btcrDidUtils.js and xsltproc to build the ./index.html file from external/coinbin/index.html
+Some files need to be built so we use browserify to create build/btcrDidUtils.js and xsltproc to build the ./index.html file from external/coinbin/index.html.  The xsltproc step is configured in Make.
 
 ```bash
 git clone https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io.git
@@ -24,7 +24,7 @@ git submodule init
 git submodule update
 cd external/btcrDidUtils.js
 browserify index.js --s BtcrUtils -t [ babelify --presets [ babel-presetes2015 ] ] -o ../../build/btcrDidUtils.js
-xsltproc index.xsl --html external/coinbin/index.html > index.html
+make
 ```
 
 ## Making changes this code
