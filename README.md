@@ -6,8 +6,7 @@ In order to build btcr-did-tools-js for use in the browser we need to use browse
 ```bash
 sudo apt-get install xsltproc nodejs-dev node-gyp libssl1.0-dev
 sudo apt-get install npm
-sudo npm install -g browserify babelify jsonld jsonld-signatures commander \
-bitcoinjs-lib babel-preset-es2015
+sudo npm install -g browserify babelify jsonld jsonld-signatures commander bitcoinjs-lib babel-preset-es2015
 ```
 
 ## Installation
@@ -20,10 +19,7 @@ Some files need to be built so we use browserify to create build/btcrDidUtils.js
 ```bash
 git clone https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io.git
 cd btcr-tx-playground.github.io
-git submodule init
-git submodule update
-cd external/btcrDidUtils.js
-browserify index.js --s BtcrUtils -t [ babelify --presets [ babel-presetes2015 ] ] -o ../../build/btcrDidUtils.js
+make update-all
 make
 ```
 
