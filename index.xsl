@@ -117,4 +117,22 @@
 		</xsl:copy>
 	</xsl:template>	
 
+	<!-- Insert new DID tab and link --> 
+	<xsl:template match="//ul[@class='nav navbar-nav']/li[@class='dropdown']/ul">
+		<xsl:copy select="ul">
+			<xsl:apply-templates select="@*"/>
+			<xsl:apply-templates select="node()"/>
+			<li>
+			<xsl:copy-of select="$home//body/a[@id='btnNewDid']"/>
+			</li>
+		</xsl:copy>
+	</xsl:template>
+	<xsl:template match="//div[@id='content']/div[@class='tab-content']">
+		<xsl:copy>
+			<xsl:apply-templates select="@*"/>
+			<xsl:apply-templates select="node()"/>
+			<xsl:copy-of select="$home//body/div[@id='newDid']" />
+		</xsl:copy>
+	</xsl:template>
+
 </xsl:stylesheet>
