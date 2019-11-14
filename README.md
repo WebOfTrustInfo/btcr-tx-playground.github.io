@@ -19,7 +19,7 @@ Some files need to be built so we use browserify to create build/btcrDidUtils.js
 ```bash
 git clone https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io.git
 cd btcr-tx-playground.github.io
-make update-all
+make deps
 make
 ```
 

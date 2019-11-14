@@ -2,12 +2,13 @@
 	<head>
 		<title>BTCR TX Playground</title>
 		
-		<script src="external/txref-conversion-js/txrefConverter-browserified.js"></script>
-		<script src="build/btcrDidUtils.js"></script>
+		<script src="js/build/txrefConverter-browserified.js"></script>
+		<script src="js/build/btcrDidUtils.js"></script>
 		<script src="js/playground.js"></script>
 	</head>
 	<body>
 		<a href="#home" class="navbar-brand" id="homeBtn">BTCR Playground</a>
+		<a href="#newDid" id="btnNewDid">DID</a>
 
 		<div class="tab-pane tab-content active" id="home">
 
@@ -62,10 +63,8 @@
 					<div class="modal-content">
 						<div class="modal-header">
 							<h4 class="modal-title" id="resultsModalLabel">Results</h4>
-							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-								<span aria-hidden="true">Close</span>
-							</button>
 						</div>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 						<div class="modal-body">
 							<div class="container-fluid">
 								<div class="row">
@@ -99,27 +98,42 @@
 		</div>
 
 		<div class="tab-pane tab-content" id="about">
-			<div class="row">
+			<div class="container">
+				<div class="row">
 
-				<h2>About</h2>
-				<p>BTCR Playground is built on the open source coinb.in wallet</p>
-				<p>Code for this repo is located at <a href="https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io" target="new">btcr-tx-playground.github.io</a>.</p>
+					<h2>About</h2>
+					<p>BTCR Playground is built on the open source coinb.in wallet</p>
+					<p>Code for this repo is located at <a href="https://github.com/WebOfTrustInfo/btcr-tx-playground.github.io" target="new">btcr-tx-playground.github.io</a>.</p>
 
-				<h2>Supporting libraries include:</h2>
-				<ul>
-					<li>BTCR resolver utils: <a href="https://github.com/WebOfTrustInfo/btcr-did-tools-js" target="new">Github</a></li>
-					<li>BTCR txref-conversion-js: <a href="https://github.com/WebOfTrustInfo/txref-conversion-js" target="new">Github</a></li>
-					<li>Coinb.in wallet: <a href="https://github.com/OutCast3k/coinbin.git" target="new">Github</a></li>
-				</ul>
-				
-				<h2>Additional Details:</h2>
-				<ul>
-					<li><a href="https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/btcr-resolver.pdf">BTCR DID Resolution</a></li>
-					<li><a href="https://github.com/w3c-ccg/did-hackathon-2018/blob/master/README.md">Latest BTCR Hackathon</a></li>
-					<li><a href="https://www.icloud.com/keynote/0Bcwqiyw6RGvMZgDyFt-prI_g#BTCR">Presentation visuazing how BTCR works</a></li>
-					<li><a href="BTCRVisualization.001.png">BTCR Resolution, single image</a></li>
-				</ul>
+					<h2>Supporting libraries include:</h2>
+					<ul>
+						<li>BTCR resolver utils: <a href="https://github.com/WebOfTrustInfo/btcr-did-tools-js" target="new">Github</a></li>
+						<li>BTCR txref-conversion-js: <a href="https://github.com/WebOfTrustInfo/txref-conversion-js" target="new">Github</a></li>
+						<li>Coinb.in wallet: <a href="https://github.com/OutCast3k/coinbin.git" target="new">Github</a></li>
+					</ul>
+					
+					<h2>Additional Details:</h2>
+					<ul>
+						<li><a href="https://github.com/WebOfTrustInfo/rebooting-the-web-of-trust-spring2018/blob/master/final-documents/btcr-resolver.pdf">BTCR DID Resolution</a></li>
+						<li><a href="https://github.com/w3c-ccg/did-hackathon-2018/blob/master/README.md">Latest BTCR Hackathon</a></li>
+						<li><a href="https://www.icloud.com/keynote/0Bcwqiyw6RGvMZgDyFt-prI_g#BTCR">Presentation visuazing how BTCR works</a></li>
+						<li><a href="BTCRVisualization.001.png">BTCR Resolution, single image</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
 
+		<div class="tab-pane tab-content" id="newDid">
+			<div class="container">
+				<div class="row">
+
+					<h2>Create DID</h2>
+					<p>This is where we create DIDs</p>
+					
+					<h2>Add OP_RETURN</h2>
+					<input type="text" class="form-control" name="inputOpreturn" id="opreturn" />
+					<button class="btn btn-primary" id="btnCreateDid" onclick="JavaScript:createDid()" data-toggle="modal" data-target="modalCreateDid">Create DID</button>
+				</div>
 			</div>
 		</div>
 	</body>

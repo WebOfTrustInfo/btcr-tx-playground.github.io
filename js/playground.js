@@ -15,6 +15,11 @@ var updateTxDetails = function (result, isMainnet) {
 	updateBlockHeightAndPos(txDetails.blockHeight, txDetails.blockIndex, txDetails.utxoIndex, isMainnet);
 	updateTxLink(isMainnet, txDetails.txid);
 
+	document.getElementById('d-ddo1').innerHTML = "";
+	document.getElementById('vc').innerHTML = "";
+	document.getElementById('raw').innerHTML = "";
+	document.getElementById('errors').innerHTML = "";
+
 	let ddo1 = ddoResult.implicitDdo ? ddoResult.implicitDdo : ddoResult.explicitDdo;
 
 	if (ddo1) {
@@ -23,8 +28,9 @@ var updateTxDetails = function (result, isMainnet) {
 	} else {
 		document.getElementById('raw').innerHTML = "<pre>" + ddoResult.raw + "</pre>";
 		document.getElementById('errors').innerHTML = "<pre>" + JSON.stringify(ddoResult.error, null, 4) + "</pre>";
-
 	}
+	$('#modalHome').modal('show')
+	
 };
 
 var formatUrl = function (theUrl) {
